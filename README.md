@@ -50,11 +50,11 @@ Or refer to the following for your specific operating system:
 
 ## Installation for UPMEM-PIM Project - only on linux platforms
 Run:  
-    mkdir -p build  
-    cd build  
-    cmake ..  
-    make -j4   
-    make build_dpu_programs  
+- mkdir -p build  
+- cd build  
+- cmake ..  
+- make -j4   
+- make build_dpu_programs  
 
 ## Rules on adding dpu program
 
