@@ -10,6 +10,7 @@ list(APPEND PKE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 list(APPEND PKE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 include_directories(${PKE_INCLUDE_DIRS})
 
+
 set(PKE_VERSION_MAJOR ${OPENFHE_VERSION_MAJOR})
 set(PKE_VERSION_MINOR ${OPENFHE_VERSION_MINOR})
 set(PKE_VERSION_PATCH ${OPENFHE_VERSION_PATCH})
@@ -83,7 +84,7 @@ if ( BUILD_EXAMPLES)
 		add_executable ( ${exe} ${app} )
 		set_property(TARGET ${exe} PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/examples/pke)
 		set( PKEAPPS ${PKEAPPS} ${exe} )
-		target_link_libraries ( ${exe} ${PKELIBS} )
+		target_link_libraries ( ${exe} ${PKELIBS})
 	endforeach()
 
 	add_custom_target( allpkeexamples )

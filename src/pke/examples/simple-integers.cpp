@@ -32,8 +32,8 @@
 /*
   Simple example for BFVrns (integer arithmetic)
  */
-
 #include "openfhe.h"
+
 
 using namespace lbcrypto;
 
@@ -121,18 +121,19 @@ int main() {
     plaintextRot3->SetLength(vectorOfInts1.size());
     plaintextRot4->SetLength(vectorOfInts1.size());
 
-    std::cout << "Plaintext #1: " << plaintext1 << std::endl;
-    std::cout << "Plaintext #2: " << plaintext2 << std::endl;
-    std::cout << "Plaintext #3: " << plaintext3 << std::endl;
 
-    // Output results
-    std::cout << "\nResults of homomorphic computations" << std::endl;
-    std::cout << "#1 + #2 + #3: " << plaintextAddResult << std::endl;
-    std::cout << "#1 * #2 * #3: " << plaintextMultResult << std::endl;
-    std::cout << "Left rotation of #1 by 1: " << plaintextRot1 << std::endl;
-    std::cout << "Left rotation of #1 by 2: " << plaintextRot2 << std::endl;
-    std::cout << "Right rotation of #1 by 1: " << plaintextRot3 << std::endl;
-    std::cout << "Right rotation of #1 by 2: " << plaintextRot4 << std::endl;
+    // std::cout << "Plaintext #1: " << plaintext1 << std::endl;
+    // std::cout << "Plaintext #2: " << plaintext2 << std::endl;
+    // std::cout << "Plaintext #3: " << plaintext3 << std::endl;
+
+    // // Output results
+    // std::cout << "\nResults of homomorphic computations" << std::endl;
+    // std::cout << "#1 + #2 + #3: " << plaintextAddResult << std::endl;
+    // std::cout << "#1 * #2 * #3: " << plaintextMultResult << std::endl;
+    // std::cout << "Left rotation of #1 by 1: " << plaintextRot1 << std::endl;
+    // std::cout << "Left rotation of #1 by 2: " << plaintextRot2 << std::endl;
+    // std::cout << "Right rotation of #1 by 1: " << plaintextRot3 << std::endl;
+    // std::cout << "Right rotation of #1 by 2: " << plaintextRot4 << std::endl;
 
     return 0;
 }

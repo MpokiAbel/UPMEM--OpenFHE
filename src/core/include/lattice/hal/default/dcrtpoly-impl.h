@@ -53,6 +53,9 @@
 #include <utility>
 #include <vector>
 
+#include <dpu>
+#include <iostream>
+using namespace dpu;
 namespace lbcrypto {
 
 template <typename VecType>
@@ -408,6 +411,25 @@ DCRTPolyImpl<VecType> DCRTPolyImpl<VecType>::Minus(const DCRTPolyImpl& rhs) cons
 template <typename VecType>
 DCRTPolyImpl<VecType>& DCRTPolyImpl<VecType>::operator+=(const DCRTPolyImpl& rhs) {
     size_t size{m_vectors.size()};
+
+    /*
+        DPU code example for integrartion.
+    */
+    try {
+        auto system = DpuSet::allocate(1, "backend=simulator");
+        auto dpu    = system.dpus()[0];
+        dpu->load("/home/mpoki/Documents/UPMEM/implementations/UPMEM-OpenFHE/build/bin/examples/pke/helloworld");
+        dpu->exec();
+        dpu->log(std::cout);
+    }
+    catch (const DpuError& e) {
+        std::cerr << e.what() << std::endl;
+    }
+
+    /*
+        End dpu code
+    */
+
 #pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(size))
     for (size_t i = 0; i < size; ++i)
         m_vectors[i] += rhs.m_vectors[i];

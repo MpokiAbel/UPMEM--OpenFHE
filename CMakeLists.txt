@@ -78,6 +78,8 @@ option( WITH_NATIVEOPT "Use machine-specific optimizations"                     
 option( WITH_COVTEST "Turn on to enable coverage testing"                            OFF )
 option( WITH_NOISE_DEBUG "Use only when running lattice estimator; not for production" OFF )
 option( USE_MACPORTS "Use MacPorts installed packages"                               OFF )
+option( RUN_ON_DPU "Parallelize the code on DPUs"                               OFF )
+
 
 # Set required number of bits for native integer in build by setting NATIVE_SIZE to 64 or 128
 if( NOT NATIVE_SIZE )
@@ -107,6 +109,8 @@ message( STATUS "WITH_NATIVEOPT:   ${WITH_NATIVEOPT}")
 message( STATUS "WITH_COVTEST:     ${WITH_COVTEST}")
 message( STATUS "WITH_NOISE_DEBUG: ${WITH_NOISE_DEBUG}")
 message( STATUS "USE_MACPORTS:     ${USE_MACPORTS}")
+message( STATUS "RUN_ON_DPU:     ${RUN_ON_DPU}")
+
 
 #--------------------------------------------------------------------
 # Compiler logic
@@ -198,6 +202,18 @@ if(BUILD_SHARED)
 endif()
 
 set(OpenFHE_PACKAGE_LIBS ${OpenFHE_STATIC_LIBS} ${OpenFHE_SHARED_LIBS})
+
+
+if(RUN_ON_DPU)
+    set(DPU_PKG_NAME "dpu")
+    execute_process(COMMAND dpu-pkg-config --cflags ${DPU_PKG_NAME} OUTPUT_VARIABLE DPU_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND dpu-pkg-config --libs ${DPU_PKG_NAME} OUTPUT_VARIABLE DPU_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
+    add_compile_options(${DPU_CFLAGS})
+	link_libraries (${DPU_LIBS})
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 
 #--------------------------------------------------------------------
 # Installation logic

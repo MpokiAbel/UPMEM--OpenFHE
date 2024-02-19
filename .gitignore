@@ -5,7 +5,7 @@
 *.gcov
 bin/
 build*/
-build/
+build
 cmake-build-debug
 docs/doxygen
 docs/sphinx
