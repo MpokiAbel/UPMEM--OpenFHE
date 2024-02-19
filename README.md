@@ -49,7 +49,7 @@ Or refer to the following for your specific operating system:
 
 
 ## Installation for UPMEM-PIM Project - only on linux platforms
-Run:
+Run:  
     mkdir -p build  
     cd build  
     cmake ..  
