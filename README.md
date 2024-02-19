@@ -39,12 +39,27 @@ Refer to our General Installation Information: [readthedocs](https://openfhe-dev
 
 Or refer to the following for your specific operating system:
 
+# Original Compilation and Installation
+
 - [Linux](https://openfhe-development.readthedocs.io/en/latest/sphinx_rsts/intro/installation/linux.html)
 
 - [MacOS](https://openfhe-development.readthedocs.io/en/latest/sphinx_rsts/intro/installation/macos.html)
 
 - [Windows](https://openfhe-development.readthedocs.io/en/latest/sphinx_rsts/intro/installation/windows.html)
 
+
+# Installation for UPMEM-PIM Project - only on linux platforms
+Run:
+    mkdir -p build 
+    cd build 
+    cmake .. 
+    make -j4 
+    make build_dpu_programs
+
+# Rules on adding dpu program
+
+1. Make sure the program is placed in the folder /src/dpu
+2. The dpu program name should end with an extension *_dpu.c 
 
 ## Code Examples
 
