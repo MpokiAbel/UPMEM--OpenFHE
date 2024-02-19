@@ -48,7 +48,10 @@ Or refer to the following for your specific operating system:
 - [Windows](https://openfhe-development.readthedocs.io/en/latest/sphinx_rsts/intro/installation/windows.html)
 
 
-## Installation for UPMEM-PIM Project - only on linux platforms
+## Installation with UPMEM-PIM Project - Only on Linux platforms
+
+Make sure that you have the [UPMEM TOOLCHAIN][https://sdk.upmem.com/stable/01_Install.html] installed !!
+
 Run:  
 - mkdir -p build  
 - cd build  
