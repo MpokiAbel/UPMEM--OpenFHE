@@ -78,7 +78,7 @@ option( WITH_NATIVEOPT "Use machine-specific optimizations"                     
 option( WITH_COVTEST "Turn on to enable coverage testing"                            OFF )
 option( WITH_NOISE_DEBUG "Use only when running lattice estimator; not for production" OFF )
 option( USE_MACPORTS "Use MacPorts installed packages"                               OFF )
-option( RUN_ON_DPU "Parallelize the code on DPUs"                               OFF )
+option( RUN_ON_DPU "Parallelize the code on DPUs"                               ON )
 
 
 # Set required number of bits for native integer in build by setting NATIVE_SIZE to 64 or 128
@@ -109,8 +109,6 @@ message( STATUS "WITH_NATIVEOPT:   ${WITH_NATIVEOPT}")
 message( STATUS "WITH_COVTEST:     ${WITH_COVTEST}")
 message( STATUS "WITH_NOISE_DEBUG: ${WITH_NOISE_DEBUG}")
 message( STATUS "USE_MACPORTS:     ${USE_MACPORTS}")
-message( STATUS "RUN_ON_DPU:     ${RUN_ON_DPU}")
-
 
 #--------------------------------------------------------------------
 # Compiler logic
@@ -204,14 +202,30 @@ endif()
 set(OpenFHE_PACKAGE_LIBS ${OpenFHE_STATIC_LIBS} ${OpenFHE_SHARED_LIBS})
 
 
-if(RUN_ON_DPU)
-    set(DPU_PKG_NAME "dpu")
-    execute_process(COMMAND dpu-pkg-config --cflags ${DPU_PKG_NAME} OUTPUT_VARIABLE DPU_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-    execute_process(COMMAND dpu-pkg-config --libs ${DPU_PKG_NAME} OUTPUT_VARIABLE DPU_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
-    add_compile_options(${DPU_CFLAGS})
-	link_libraries (${DPU_LIBS})
+#--------------------------------------------------------------------
+# Here is the configuration for Integrating the DPU code
+#--------------------------------------------------------------------
+set(DPU_PKG_NAME "dpu")
+find_library(DPU_LIBRARY
+  NAMES ${DPU_PKG_NAME} dpu_lib # Possible names of the DPU library
+  HINTS "/path/to/custom/library" # Optional hints
+)
+
+if(DPU_LIBRARY)
+    if(RUN_ON_DPU)       
+        execute_process(COMMAND dpu-pkg-config --cflags ${DPU_PKG_NAME} OUTPUT_VARIABLE DPU_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+        execute_process(COMMAND dpu-pkg-config --libs ${DPU_PKG_NAME} OUTPUT_VARIABLE DPU_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
+        add_compile_options(${DPU_CFLAGS})
+        link_libraries (${DPU_LIBS})
+        message( STATUS "RUN_ON_DPU:     ${RUN_ON_DPU}")
+    endif()
+else()
+    set(RUN_ON_DPU OFF)
+    message( STATUS "RUN_ON_DPU:     ${RUN_ON_DPU}")
+
 endif()
 
+# Set these flags for debugging option -- useful for profiling 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 
@@ -678,6 +692,7 @@ endif()
 add_subdirectory(src/core)
 add_subdirectory(src/pke)
 add_subdirectory(src/binfhe)
+add_subdirectory(src/dpu)
 
 ### build the google test handlers
 ###if( BUILD_UNITTESTS )

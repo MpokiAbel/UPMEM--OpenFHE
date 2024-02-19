@@ -418,7 +418,7 @@ DCRTPolyImpl<VecType>& DCRTPolyImpl<VecType>::operator+=(const DCRTPolyImpl& rhs
     try {
         auto system = DpuSet::allocate(1, "backend=simulator");
         auto dpu    = system.dpus()[0];
-        dpu->load("/home/mpoki/Documents/UPMEM/implementations/UPMEM-OpenFHE/build/bin/examples/pke/helloworld");
+        dpu->load("./src/dpu/helloworld_dpu");
         dpu->exec();
         dpu->log(std::cout);
     }
