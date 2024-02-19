@@ -50,7 +50,7 @@ Or refer to the following for your specific operating system:
 
 ## Installation with UPMEM-PIM Project - Only on Linux platforms
 
-Make sure that you have the [UPMEM TOOLCHAIN][https://sdk.upmem.com/stable/01_Install.html] installed !!
+Make sure that you have the [UPMEM TOOLCHAIN](https://sdk.upmem.com/stable/01_Install.html) installed !!
 
 Run:  
 - mkdir -p build  
