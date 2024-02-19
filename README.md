@@ -33,13 +33,13 @@ guidelines outlined in [building OpenFHE for best performance](https://github.co
  * To report security vulnerabilities, please email us at contact@openfhe.org
 
 
-## Installation
+# Installation
 
 Refer to our General Installation Information: [readthedocs](https://openfhe-development.readthedocs.io/en/latest/sphinx_rsts/intro/installation/installation.html) for more information
 
 Or refer to the following for your specific operating system:
 
-# Original Compilation and Installation
+## Original Compilation and Installation
 
 - [Linux](https://openfhe-development.readthedocs.io/en/latest/sphinx_rsts/intro/installation/linux.html)
 
@@ -48,20 +48,20 @@ Or refer to the following for your specific operating system:
 - [Windows](https://openfhe-development.readthedocs.io/en/latest/sphinx_rsts/intro/installation/windows.html)
 
 
-# Installation for UPMEM-PIM Project - only on linux platforms
+## Installation for UPMEM-PIM Project - only on linux platforms
 Run:
-    mkdir -p build 
-    cd build 
-    cmake .. 
-    make -j4 
-    make build_dpu_programs
+    mkdir -p build  
+    cd build  
+    cmake ..  
+    make -j4   
+    make build_dpu_programs  
 
-# Rules on adding dpu program
+## Rules on adding dpu program
 
 1. Make sure the program is placed in the folder /src/dpu
 2. The dpu program name should end with an extension *_dpu.c 
 
-## Code Examples
+# Code Examples
 
 To get familiar with the main API of OpenFHE, we recommend looking at the code of the following examples:
    1. FHE for arithmetic over integers (BFV):
