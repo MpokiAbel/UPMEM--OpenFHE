@@ -59,7 +59,6 @@ cd build
 cmake ..  
 make -j4   
 make build_dpu_programs  
-
 ```
 ## Rules on adding dpu program
 

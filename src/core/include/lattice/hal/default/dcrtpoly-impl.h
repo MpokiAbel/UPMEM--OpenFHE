@@ -46,6 +46,7 @@
 #include "utils/parallel.h"
 #include "utils/utilities.h"
 #include "utils/utilities-int.h"
+#include "openFHEdpu.h"
 
 #include <ostream>
 #include <memory>
@@ -53,9 +54,6 @@
 #include <utility>
 #include <vector>
 
-#include <dpu>
-#include <iostream>
-using namespace dpu;
 namespace lbcrypto {
 
 template <typename VecType>
@@ -412,23 +410,7 @@ template <typename VecType>
 DCRTPolyImpl<VecType>& DCRTPolyImpl<VecType>::operator+=(const DCRTPolyImpl& rhs) {
     size_t size{m_vectors.size()};
 
-    /*
-        DPU code example for integrartion.
-    */
-    try {
-        auto system = DpuSet::allocate(1, "backend=simulator");
-        auto dpu    = system.dpus()[0];
-        dpu->load("./src/dpu/helloworld_dpu");
-        dpu->exec();
-        dpu->log(std::cout);
-    }
-    catch (const DpuError& e) {
-        std::cerr << e.what() << std::endl;
-    }
-
-    /*
-        End dpu code
-    */
+    // run_on_dpu();
 
 #pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(size))
     for (size_t i = 0; i < size; ++i)

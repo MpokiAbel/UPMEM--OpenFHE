@@ -757,6 +757,8 @@ public:
    * @return is the result of the modulus addition operation.
    */
     NativeIntegerT& ModAddFastEq(const NativeIntegerT& b, const NativeIntegerT& modulus) {
+        std::cout << "Hello I am performing ModAddFastEq " << std::endl;
+
         auto& mv{modulus.m_value};
         m_value += b.m_value;
         if (m_value >= mv)

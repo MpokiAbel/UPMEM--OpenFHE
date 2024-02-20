@@ -334,6 +334,8 @@ ubint<limb_t> ubint<limb_t>::ModAddFast(const ubint& b, const ubint& modulus) co
 
 template <typename limb_t>
 ubint<limb_t>& ubint<limb_t>::ModAddFastEq(const ubint& b, const ubint& modulus) {
+    // std::cout << "Hello I am performing ModAddFastEq " << std::endl;
+
     *this = b.Add(*this);
     if (*this >= modulus)
         return ubint<limb_t>::SubEq(modulus);
