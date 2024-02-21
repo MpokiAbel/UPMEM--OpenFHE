@@ -46,7 +46,7 @@
 #include "utils/parallel.h"
 #include "utils/utilities.h"
 #include "utils/utilities-int.h"
-#include "openFHEdpu.h"
+// #include "openFHEdpu.h"
 
 #include <ostream>
 #include <memory>
@@ -411,7 +411,6 @@ DCRTPolyImpl<VecType>& DCRTPolyImpl<VecType>::operator+=(const DCRTPolyImpl& rhs
     size_t size{m_vectors.size()};
 
     // run_on_dpu();
-
 #pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(size))
     for (size_t i = 0; i < size; ++i)
         m_vectors[i] += rhs.m_vectors[i];

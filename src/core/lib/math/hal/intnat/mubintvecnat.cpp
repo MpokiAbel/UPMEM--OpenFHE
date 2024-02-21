@@ -241,7 +241,7 @@ NativeVectorT<IntegerType> NativeVectorT<IntegerType>::ModAdd(const NativeVector
 
 template <class IntegerType>
 NativeVectorT<IntegerType>& NativeVectorT<IntegerType>::ModAddEq(const NativeVectorT& b) {
-        std::cout << "Hello I am performing ModAddEq " << std::endl;
+        // std::cout << "Hello I am performing ModAddEq " << std::endl;
 
     if (m_data.size() != b.m_data.size() || m_modulus != b.m_modulus)
         OPENFHE_THROW(lbcrypto::math_error, "ModAddEq called on NativeVectorT's with different parameters.");
