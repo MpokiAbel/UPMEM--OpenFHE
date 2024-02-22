@@ -206,6 +206,7 @@ set(OpenFHE_PACKAGE_LIBS ${OpenFHE_STATIC_LIBS} ${OpenFHE_SHARED_LIBS})
 # Here is the configuration for Integrating the DPU code
 #--------------------------------------------------------------------
 set(DPU_PKG_NAME "dpu")
+
 find_library(DPU_LIBRARY
   NAMES ${DPU_PKG_NAME} dpu_lib # Possible names of the DPU library
   HINTS "/path/to/custom/library" # Optional hints
@@ -217,6 +218,7 @@ if(DPU_LIBRARY)
         execute_process(COMMAND dpu-pkg-config --libs ${DPU_PKG_NAME} OUTPUT_VARIABLE DPU_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
         add_compile_options(${DPU_CFLAGS})
         link_libraries (${DPU_LIBS})
+        add_definitions(-DRUN_ON_DPU)
         message( STATUS "RUN_ON_DPU:     ${RUN_ON_DPU}")
     endif()
 else()

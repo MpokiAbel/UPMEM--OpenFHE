@@ -46,6 +46,7 @@
 #include "utils/inttypes.h"
 #include "utils/openfhebase64.h"
 #include "utils/serializable.h"
+#include "dpu/openFHEdpu.h"
 
 #include <cstdint>
 // #include <cstdlib>
@@ -60,6 +61,12 @@
 // #include <typeinfo>
 #include <vector>
 #include <utility>
+
+// #include <dpu>
+// #include <iostream>
+
+// using namespace dpu;
+// #include "UPMEM-OpenFHE/src/dpu/include/openFHEdpu.h"
 
 // the default behavior of the native integer layer is
 // to assume that the user does not need bounds/range checks
@@ -760,7 +767,13 @@ public:
         // std::cout << "Hello I am performing ModAddFastEq " << std::endl;
 
         auto& mv{modulus.m_value};
-        m_value += b.m_value;
+
+#ifdef RUN_ON_DPU
+        m_value = run_on_dpu(m_value, b.m_value);
+        std::cout << "Run on DPU enabled " << std::endl;
+#else
+        m_value = m_value + b.m_value;
+#endif
         if (m_value >= mv)
             m_value -= mv;
         return *this;
@@ -2087,7 +2100,7 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
     return os;
 }
 // to stream internal representation
-template std::ostream& operator<< <uint64_t>(std::ostream& os, const std::vector<uint64_t>& v);
+template std::ostream& operator<<<uint64_t>(std::ostream& os, const std::vector<uint64_t>& v);
 
 }  // namespace intnat
 

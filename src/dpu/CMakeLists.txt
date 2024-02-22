@@ -10,8 +10,8 @@
 # Get all dpu programs files to compiles
 file(GLOB DPU_SOURCE_FILES "programs/*_dpu.c")
 
-list(APPEND DPU_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
-include_directories(${DPU_INCLUDE_DIRS})
+# set(DPU_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
+# include_directories(${DPU_INCLUDE_DIRS})
 
 # set the C compiler used to compile the DPU programs
 set(DPU_CLANG_COMPILER "dpu-upmem-dpurte-clang")
@@ -32,7 +32,7 @@ if(RUN_ON_DPU)
         # Add a custom command for each program to compile
         add_custom_command(
             TARGET build_dpu_programs
-            COMMAND ${CMAKE_COMMAND} -E env ${DPU_CLANG_COMPILER} -o ${CMAKE_BINARY_DIR}/src/dpu/programs/${program_name} ${source_file}
+            COMMAND ${CMAKE_COMMAND} -E env ${DPU_CLANG_COMPILER} -o ${CMAKE_BINARY_DIR}/src/dpu/${program_name} ${source_file}
             COMMENT "Compiling DPU Program ${program_name}..."
             DEPENDS ${source_file}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

@@ -75,16 +75,20 @@ int main() {
     // std::vector<int64_t> vectorOfInts3 = {1, 2, 5, 2, 5, 6, 7, 8, 9, 10, 11, 12};
     // Plaintext plaintext3               = cryptoContext->MakePackedPlaintext(vectorOfInts3);
 
+    std::cout<<"I am about to do Encryption"<<std::endl;
     // The encoded vectors are encrypted
     auto ciphertext1 = cryptoContext->Encrypt(keyPair.publicKey, plaintext1);
     auto ciphertext2 = cryptoContext->Encrypt(keyPair.publicKey, plaintext2);
     // auto ciphertext3 = cryptoContext->Encrypt(keyPair.publicKey, plaintext3);
+        std::cout<<"Finished Encryption"<<std::endl;
 
     // Sample Program: Step 4: Evaluation
 
+  std::cout<<"I am about to do addition"<<std::endl;
     // Homomorphic additions
     auto ciphertextAddResult     = cryptoContext->EvalAdd(ciphertext1, ciphertext2);
     // auto ciphertextAddResult = cryptoContext->EvalAdd(ciphertextAdd12, ciphertext3);
+  std::cout<<"Finished addition"<<std::endl;
 
     // Homomorphic multiplications
     // auto ciphertextMul12      = cryptoContext->EvalMult(ciphertext1, ciphertext2);

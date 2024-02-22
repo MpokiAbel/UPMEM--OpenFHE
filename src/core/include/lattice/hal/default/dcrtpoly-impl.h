@@ -410,8 +410,10 @@ template <typename VecType>
 DCRTPolyImpl<VecType>& DCRTPolyImpl<VecType>::operator+=(const DCRTPolyImpl& rhs) {
     size_t size{m_vectors.size()};
 
+    std::cout<<"Size is "<<size<<std::endl;
+    // m_vectors[0].m_values[0]
     // run_on_dpu();
-#pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(size))
+// #pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(size))
     for (size_t i = 0; i < size; ++i)
         m_vectors[i] += rhs.m_vectors[i];
     return *this;

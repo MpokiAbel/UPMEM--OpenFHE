@@ -5,6 +5,7 @@
 # all files named *.cpp are compiled to form the library
 file (GLOB_RECURSE PKE_SRC_FILES CONFIGURE_DEPENDS lib/*.cpp)
 
+# include_directories(${DPU_INCLUDE_DIRS})
 include_directories(${CORE_INCLUDE_DIRS})
 list(APPEND PKE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 list(APPEND PKE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/lib")
