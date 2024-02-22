@@ -768,6 +768,7 @@ public:
 
         auto& mv{modulus.m_value};
 
+
 #ifdef RUN_ON_DPU
         m_value = run_on_dpu(m_value, b.m_value);
         std::cout << "Run on DPU enabled " << std::endl;
