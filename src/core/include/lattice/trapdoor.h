@@ -172,7 +172,7 @@ public:
    *
    * @param n ring dimension
    * @param k matrix sample dimension; k = log2(q)/log2(base) + 2
-   * @param &A public key of the trapdoor pair
+   * @param &A public key of the trapdoor pairp
    * @param &T trapdoor itself
    * @param &u syndrome vector where gaussian that Gaussian sampling is centered
    * around

@@ -46,7 +46,6 @@
 #include "utils/inttypes.h"
 #include "utils/openfhebase64.h"
 #include "utils/serializable.h"
-#include "dpu/openFHEdpu.h"
 
 #include <cstdint>
 // #include <cstdlib>
@@ -769,8 +768,8 @@ public:
         auto& mv{modulus.m_value};
 
 #ifdef RUN_ON_DPU
-        m_value = run_on_dpu(m_value, b.m_value);
-        std::cout << "Run on DPU enabled " << std::endl;
+        // m_value = run_on_dpu(m_value, b.m_value);
+        // std::cout << "Run on DPU enabled " << std::endl;
 #else
         m_value = m_value + b.m_value;
 #endif
