@@ -33,7 +33,8 @@
   Simple example for BFVrns (integer arithmetic)
  */
 #include "openfhe.h"
-
+#include <iostream>
+#include <chrono>
 
 using namespace lbcrypto;
 
@@ -80,15 +81,21 @@ int main() {
     auto ciphertext1 = cryptoContext->Encrypt(keyPair.publicKey, plaintext1);
     auto ciphertext2 = cryptoContext->Encrypt(keyPair.publicKey, plaintext2);
     // auto ciphertext3 = cryptoContext->Encrypt(keyPair.publicKey, plaintext3);
-        // std::cout<<"Finished Encryption"<<std::endl;
+    // std::cout<<"Finished Encryption"<<std::endl;
 
     // Sample Program: Step 4: Evaluation
 
-  // std::cout<<"I am about to do addition"<<std::endl;
+    // std::cout<<"I am about to do addition"<<std::endl;
     // Homomorphic additions
-    auto ciphertextAddResult     = cryptoContext->EvalAdd(ciphertext1, ciphertext2);
+
+    auto start                                        = std::chrono::high_resolution_clock::now();
+    auto ciphertextAddResult                          = cryptoContext->EvalAdd(ciphertext1, ciphertext2);
+    auto end                                          = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << "Function took " << elapsed.count() << " milliseconds.\n";
+
     // auto ciphertextAddResult = cryptoContext->EvalAdd(ciphertextAdd12, ciphertext3);
-  // std::cout<<"Finished addition"<<std::endl;
+    // std::cout<<"Finished addition"<<std::endl;
 
     // Homomorphic multiplications
     // auto ciphertextMul12      = cryptoContext->EvalMult(ciphertext1, ciphertext2);
@@ -124,7 +131,6 @@ int main() {
     // plaintextRot2->SetLength(vectorOfInts1.size());
     // plaintextRot3->SetLength(vectorOfInts1.size());
     // plaintextRot4->SetLength(vectorOfInts1.size());
-
 
     // std::cout << "Plaintext #1: " << plaintext1 << std::endl;
     // std::cout << "Plaintext #2: " << plaintext2 << std::endl;

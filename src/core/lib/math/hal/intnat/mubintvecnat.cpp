@@ -247,33 +247,10 @@ NativeVectorT<IntegerType>& NativeVectorT<IntegerType>::ModAddEq(const NativeVec
         OPENFHE_THROW(lbcrypto::math_error, "ModAddEq called on NativeVectorT's with different parameters.");
     auto mv{m_modulus};
 
-// Lets parallelize from here !!!
-/*
-        The input of modAddFastq are m_data[i].m_value, b[i].m_value and mv.m_value
-        How to copy the data efficiently to the dpu. Basically package each vector 
-        and the modulus and copy to dpu 
-
-        Just as a starting point i will put vectors of uint64_t and will revert letter !!
-    
-    */
-
-// This stage is to package the data to be transfered to the DPU memory
 #ifdef RUN_ON_DPU
-    std::vector<int64_t> m_data_mvalue;
-    std::vector<int64_t> b_mvalue;
-    int64_t mv_m_value = mv.m_value;
-
-    for (size_t i = 0; i < m_data.size(); i++) {
-        m_data_mvalue.push_back(m_data[i].m_value);
-        b_mvalue.push_back(b[i].m_value);
-    }
-
-    m_data_mvalue = run_on_dpu(m_data_mvalue, b_mvalue, mv_m_value);
-
-    for (size_t i = 0; i < m_data_mvalue.size(); i++) {
-        m_data[i].m_value = m_data_mvalue[i];
-    }
-
+    int ret = run_on_pim(this, b);
+    if (!ret)
+        std::cout << "Run On DPU failed" << std::endl;
 #else
 
     for (size_t i = 0; i < m_data.size(); ++i)

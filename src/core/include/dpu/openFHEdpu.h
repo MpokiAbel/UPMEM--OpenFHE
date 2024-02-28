@@ -1,66 +1,68 @@
 #include <dpu>
 #include <iostream>
-
+#include <chrono>
+#include <tuple>
 using namespace dpu;
 
-// template <typename Element>
-// Element run_on_dpu(Element& m_value_1, const Element& m_value_2) {
-//     try {
-//         auto system = DpuSet::allocate(1, "backend=simulator");
-//         auto dpu    = system.dpus()[0];
+/* get_data() This function is made to extract the data from the type of data representations available i.e 
+    1. DCRTPoly
+    2. NativeVectorT
+    3. Interger etc
 
-//         std::vector<Element> data{m_value_1, m_value_2};
-//         std::vector<std::vector<Element>> results{std::vector<Element>(1)};
+    The current implementation assume we are dealing with NativeVectorT type more representations will be added
+*/
 
-//         dpu->load("./src/dpu/helloworld_dpu");
-//         dpu->copy("my_var", data);
-//         dpu->exec();
-//         dpu->log(std::cout);
-//         dpu->copy(results, "my_var");
+template <typename Element>
+std::tuple<std::vector<uint64_t>, std::vector<uint64_t>, std::vector<uint64_t>> get_data(Element& a, const Element& b) {
+    std::vector<uint64_t> a_data;
+    std::vector<uint64_t> b_data;
+    std::vector<uint64_t> modulus;
 
-//         return results[0][0];
-//     }
-//     catch (const DpuError& e) {
-//         std::cerr << e.what() << std::endl;
-//     }
+    modulus.push_back(a.GetModulus().toNativeInt());
 
-//     return 0;
-// }
-
-int run_on_dpu() {
-    try {
-        auto dpu = DpuSet::allocate(1);
-        dpu.load("./src/dpu/helloworld_dpu");
-        dpu.exec();
-        dpu.log(std::cout);
-    }
-    catch (const DpuError& e) {
-        std::cerr << e.what() << std::endl;
+    for (size_t i = 0; i < a.GetLength(); i++) {
+        a_data.push_back(a[i].toNativeInt());
+        b_data.push_back(b[i].toNativeInt());
     }
 
-    return 0;
+    return std::make_tuple(a_data, b_data, modulus);
+}
+
+/*
+    Here we assume the usage of one DPU hence results is only stored on the first element of the outer vector
+    Before using multiple DPUs change this
+*/
+
+template <class Element, typename IntType>
+void set_data(Element* a, std::vector<std::vector<IntType>> results) {
+    for (size_t i = 0; i < a->GetLength(); i++) {
+        (*a)[i].SetValue(std::to_string(results[0][i]));
+    }
 }
 
 template <typename Element>
-std::vector<Element> run_on_dpu(std::vector<Element>& m_value_1, std::vector<Element>& m_value_2, Element modulus) {
-    std::vector<Element> ret;
-    try {
-        auto system = DpuSet::allocate(1, "backend=simulator");
-        auto dpu    = system.dpus()[0];
+int run_on_pim(Element* a, const Element& b) {
+    int ret = 0;
 
-        std::vector<Element> m_modulus = {modulus};
-        std::vector<std::vector<Element>> results{std::vector<Element>(m_value_1.size())};
+    try {
+        auto system = DpuSet::allocate(1);
+        auto dpu    = system.dpus()[0];
+        auto data   = get_data(*a, b);
+
+        std::vector<std::vector<uint64_t>> results{std::vector<uint64_t>(a->GetLength())};
 
         dpu->load("./src/dpu/mubintvecnat_dpu");
-        std::cout << "LOADED THE DPU PROGRAM" << std::endl;
-        dpu->copy("mram_array_1", m_value_1);
-        dpu->copy("mram_array_2", m_value_2);
-        dpu->copy("mram_modulus", m_modulus);
+
+        dpu->copy("mram_array_1", std::get<0>(data));
+        dpu->copy("mram_array_2", std::get<1>(data));
+        dpu->copy("mram_modulus", std::get<2>(data));
         dpu->exec();
         dpu->log(std::cout);
         dpu->copy(results, "mram_array_1");
 
-        ret = results[0];
+        set_data<Element, uint64_t>(a, results);
+
+        ret = 1;
     }
     catch (const DpuError& e) {
         std::cerr << e.what() << std::endl;

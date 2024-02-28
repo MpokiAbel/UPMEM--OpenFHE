@@ -172,6 +172,12 @@ public:
     explicit operator NativeInt() const {
         return m_value;
     }
+
+    // ToDO: Its me who added this but learn how to use the operator above
+    NativeInt toNativeInt() const {
+        return m_value;
+    }
+
     explicit operator bool() const {
         return m_value != 0;
     }
@@ -768,8 +774,8 @@ public:
         auto& mv{modulus.m_value};
 
 #ifdef RUN_ON_DPU
-        // m_value = run_on_dpu(m_value, b.m_value);
-        // std::cout << "Run on DPU enabled " << std::endl;
+            // m_value = run_on_dpu(m_value, b.m_value);
+            // std::cout << "Run on DPU enabled " << std::endl;
 #else
         m_value = m_value + b.m_value;
 #endif
