@@ -128,3 +128,7 @@ if( BUILD_STATIC )
 	get_target_property(_compile_defs_static OPENFHEcore_static COMPILE_DEFINITIONS)
 	set(_pal_core_compile_defs_static ${_compile_defs_static} PARENT_SCOPE)
 endif()
+
+if(RUN_ON_DPU)
+	add_subdirectory(dpu)
+endif()

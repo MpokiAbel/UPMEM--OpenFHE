@@ -1,7 +1,13 @@
-#include <dpu>
-#include <iostream>
-#include <chrono>
-#include <tuple>
+#ifdef RUN_ON_DPU
+    #include <dpu>
+    #include <iostream>
+    #include <chrono>
+    #include <tuple>
+
+    #ifndef DPU_BINARY
+        #define DPU_BINARY "./src/core/dpu/mubintvecnat_dpu"
+    #endif
+
 using namespace dpu;
 
 /* get_data() This function is made to extract the data from the type of data representations available i.e 
@@ -10,6 +16,7 @@ using namespace dpu;
     3. Interger etc
 
     The current implementation assume we are dealing with NativeVectorT type more representations will be added
+    for running on multiple layers of openFHE
 */
 
 template <typename Element>
@@ -30,7 +37,7 @@ std::tuple<std::vector<uint64_t>, std::vector<uint64_t>, std::vector<uint64_t>> 
 
 /*
     Here we assume the usage of one DPU hence results is only stored on the first element of the outer vector
-    Before using multiple DPUs change this
+        Note: Before using multiple DPUs change this
 */
 
 template <class Element, typename IntType>
@@ -46,19 +53,17 @@ int run_on_pim(Element* a, const Element& b) {
 
     try {
         auto system = DpuSet::allocate(1);
-        auto dpu    = system.dpus()[0];
-        auto data   = get_data(*a, b);
+        // auto dpu    = system.dpus()[0];
+        auto data = get_data(*a, b);
 
         std::vector<std::vector<uint64_t>> results{std::vector<uint64_t>(a->GetLength())};
-
-        dpu->load("./src/dpu/mubintvecnat_dpu");
-
-        dpu->copy("mram_array_1", std::get<0>(data));
-        dpu->copy("mram_array_2", std::get<1>(data));
-        dpu->copy("mram_modulus", std::get<2>(data));
-        dpu->exec();
-        dpu->log(std::cout);
-        dpu->copy(results, "mram_array_1");
+        system.load(DPU_BINARY);
+        system.copy("mram_array_1", std::get<0>(data));
+        system.copy("mram_array_2", std::get<1>(data));
+        system.copy("mram_modulus", std::get<2>(data));
+        system.exec();
+        // dpu->log(std::cout);
+        system.copy(results, "mram_array_1");
 
         set_data<Element, uint64_t>(a, results);
 
@@ -70,3 +75,5 @@ int run_on_pim(Element* a, const Element& b) {
 
     return ret;
 }
+
+#endif

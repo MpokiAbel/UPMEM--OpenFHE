@@ -87,12 +87,12 @@ int main() {
 
     // std::cout<<"I am about to do addition"<<std::endl;
     // Homomorphic additions
-
+    
     auto start                                        = std::chrono::high_resolution_clock::now();
     auto ciphertextAddResult                          = cryptoContext->EvalAdd(ciphertext1, ciphertext2);
     auto end                                          = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end - start;
-    std::cout << "Function took " << elapsed.count() << " milliseconds.\n";
+    std::cout << "EvalAdd takes " << elapsed.count() << " milliseconds.\n";
 
     // auto ciphertextAddResult = cryptoContext->EvalAdd(ciphertextAdd12, ciphertext3);
     // std::cout<<"Finished addition"<<std::endl;
