@@ -42,6 +42,8 @@
 #include "metadata.h"
 #include "key/key.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -183,15 +185,15 @@ public:
     CiphertextImpl<Element>& operator=(const CiphertextImpl<Element>& rhs) {
         if (this != &rhs) {
             CryptoObject<Element>::operator=(rhs);
-            this->m_elements         = rhs.m_elements;
-            this->m_noiseScaleDeg    = rhs.m_noiseScaleDeg;
-            this->m_level            = rhs.m_level;
-            this->m_hopslevel        = rhs.m_hopslevel;
-            this->m_scalingFactor    = rhs.m_scalingFactor;
-            this->m_scalingFactorInt = rhs.m_scalingFactorInt;
-            this->encodingType       = rhs.encodingType;
-            this->m_slots            = rhs.m_slots;
-            this->m_metadataMap      = rhs.m_metadataMap;
+            this->m_elements               = rhs.m_elements;
+            this->m_noiseScaleDeg          = rhs.m_noiseScaleDeg;
+            this->m_level                  = rhs.m_level;
+            this->m_hopslevel              = rhs.m_hopslevel;
+            this->m_scalingFactor          = rhs.m_scalingFactor;
+            this->m_scalingFactorInt       = rhs.m_scalingFactorInt;
+            this->encodingType             = rhs.encodingType;
+            this->m_slots                  = rhs.m_slots;
+            this->m_metadataMap            = rhs.m_metadataMap;
         }
 
         return *this;
@@ -206,15 +208,15 @@ public:
     CiphertextImpl<Element>& operator=(CiphertextImpl<Element>&& rhs) {
         if (this != &rhs) {
             CryptoObject<Element>::operator=(rhs);
-            this->m_elements         = std::move(rhs.m_elements);
-            this->m_noiseScaleDeg    = std::move(rhs.m_noiseScaleDeg);
-            this->m_level            = std::move(rhs.m_level);
-            this->m_hopslevel        = std::move(rhs.m_hopslevel);
-            this->m_scalingFactor    = std::move(rhs.m_scalingFactor);
-            this->m_scalingFactorInt = std::move(rhs.m_scalingFactorInt);
-            this->encodingType       = std::move(rhs.encodingType);
-            this->m_slots            = std::move(rhs.m_slots);
-            this->m_metadataMap      = std::move(rhs.m_metadataMap);
+            this->m_elements               = std::move(rhs.m_elements);
+            this->m_noiseScaleDeg          = std::move(rhs.m_noiseScaleDeg);
+            this->m_level                  = std::move(rhs.m_level);
+            this->m_hopslevel              = std::move(rhs.m_hopslevel);
+            this->m_scalingFactor          = std::move(rhs.m_scalingFactor);
+            this->m_scalingFactorInt       = std::move(rhs.m_scalingFactorInt);
+            this->encodingType             = std::move(rhs.encodingType);
+            this->m_slots                  = std::move(rhs.m_slots);
+            this->m_metadataMap            = std::move(rhs.m_metadataMap);
         }
 
         return *this;
@@ -439,7 +441,7 @@ public:
    */
     std::shared_ptr<Metadata> GetMetadataByKey(const std::string& key) const {
         auto it = m_metadataMap->find(key);
-        if(it == m_metadataMap->end()) {
+        if (it == m_metadataMap->end()) {
             OPENFHE_THROW(openfhe_error, "Metadata element with key [" + key + "] is not found in the Metadata map.");
         }
         return std::make_shared<Metadata>(*(it->second));
@@ -467,6 +469,7 @@ public:
         cRes->SetScalingFactor(this->GetScalingFactor());
         cRes->SetScalingFactorInt(this->GetScalingFactorInt());
         cRes->SetSlots(this->GetSlots());
+        cRes->SetOperation(this->GetOperation());
 
         return cRes;
     }
@@ -583,9 +586,19 @@ public:
         return 1;
     }
 
+    void SetOperation(usint op) {
+        operation = op;
+    }
+
+    size_t GetOperation() const{
+        return operation;
+    }
+
 private:
     // vector of ring elements for this Ciphertext
     std::vector<Element> m_elements;
+
+    uint32_t operation = 0;
 
     // the degree of the scaling factor for the encrypted message.
     uint32_t m_noiseScaleDeg = 1;

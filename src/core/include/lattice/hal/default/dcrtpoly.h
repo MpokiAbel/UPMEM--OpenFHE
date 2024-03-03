@@ -47,6 +47,8 @@
 #include "utils/inttypes.h"
 #include "utils/parallel.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
@@ -73,7 +75,8 @@ public:
 
     DCRTPolyImpl() = default;
 
-    DCRTPolyImpl(const DCRTPolyType& e) noexcept : m_params{e.m_params}, m_format{e.m_format}, m_vectors{e.m_vectors} {}
+    DCRTPolyImpl(const DCRTPolyType& e) noexcept
+        : m_params{e.m_params}, m_format{e.m_format}, m_vectors{e.m_vectors}, operation{0} {}
     DCRTPolyType& operator=(const DCRTPolyType& rhs) noexcept override {
         m_params  = rhs.m_params;
         m_format  = rhs.m_format;
@@ -402,10 +405,29 @@ public:
         m_vectors[index] = std::move(element);
     }
 
+    /*  The functions setOperation and getOperation 
+        are function accessing my variable operations
+    */
+    void SetOperation(usint op) {
+        operation = op;
+    }
+
+    size_t GetOperation() const{
+        return operation;
+    }
+
 protected:
     std::shared_ptr<Params> m_params{std::make_shared<DCRTPolyImpl::Params>(0, 1)};
     Format m_format{Format::EVALUATION};
     std::vector<PolyType> m_vectors;
+
+    /* This is a variable i added to trace specific operations like addition, multiplication etc
+        For formalizations the following is the identification:
+        Addition == 1
+        Multiplication == 2
+        Rotation == 3 
+    */
+    uint32_t operation;
 };
 
 }  // namespace lbcrypto
