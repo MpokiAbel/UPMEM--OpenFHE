@@ -287,6 +287,7 @@ template <typename VecType>
 PolyImpl<VecType>& PolyImpl<VecType>::operator+=(const PolyImpl& element) {
     if (!m_values)
         m_values = std::make_unique<VecType>(m_params->GetRingDimension(), m_params->GetModulus());
+    // m_values->SetOperation(operation);
     m_values->ModAddEq(*element.m_values);
     return *this;
 }

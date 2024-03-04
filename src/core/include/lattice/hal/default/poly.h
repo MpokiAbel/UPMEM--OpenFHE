@@ -349,11 +349,23 @@ public:
         return 1;
     }
 
+    // /*  The functions setOperation and getOperation 
+    //     are function accessing my variable operations
+    // */
+    // void SetOperation(usint op) {
+    //     operation = op;
+    // }
+
+    // size_t GetOperation() const {
+    //     return operation;
+    // }
+
 protected:
     Format m_format{Format::EVALUATION};
     std::shared_ptr<Params> m_params{nullptr};
     std::unique_ptr<VecType> m_values{nullptr};
     void ArbitrarySwitchFormat();
+    // uint32_t operation;
 };
 
 // TODO: fix issue with pke build system so this can be moved back to implementation file

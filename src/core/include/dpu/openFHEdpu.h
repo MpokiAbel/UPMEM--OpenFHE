@@ -70,8 +70,8 @@ int run_on_pim(Element* a, const Element& b) {
     try {
         LOG("\nEntry to run dpu");
         // Allocation and initialization
-        const int num_dpus  = 4;  // Assuming a single DPU for simplicity; adjust as needed
-        auto system         = DpuSet::allocate(num_dpus, "backend=simulator,nrDpusPerCi=8");  // Allocate DPUs
+        const int num_dpus  = 1;  // Assuming a single DPU for simplicity; adjust as needed
+        auto system         = DpuSet::allocate(num_dpus, "backend=simulator");  // Allocate DPUs
         auto dpus_allocated = system.dpus().size();             // Number of successfully allocated DPUs
         auto data_size      = a->GetLength() / dpus_allocated;  // Calculate data size per DPU
         auto size_to_copy   = data_size * sizeof(uint64_t);     // size of data in bytes to copy

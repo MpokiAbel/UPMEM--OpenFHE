@@ -127,7 +127,7 @@ private:
 #else
     xvector<IntegerType> m_data;
 #endif
-
+    // uint32_t operation;
     // function to check if the index is a valid index.
     bool IndexCheck(size_t length) const {
         return length < m_data.size();
@@ -141,6 +141,17 @@ public:
     static constexpr NativeVectorT Single(const IntegerType& val, const IntegerType& modulus) noexcept {
         return NativeVectorT(1, modulus, val);
     }
+
+    // /*  The functions setOperation and getOperation 
+    //     are function accessing my variable operations
+    // */
+    // void SetOperation(usint op) {
+    //     operation = op;
+    // }
+
+    // size_t GetOperation() const {
+    //     return operation;
+    // }
 
     /**
    * Basic constructor for specifying the length of the vector.

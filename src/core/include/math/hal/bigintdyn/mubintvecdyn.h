@@ -625,6 +625,17 @@ public:
         return 1;
     }
 
+    /*  The functions setOperation and getOperation 
+        are function accessing my variable operations
+    */
+    // void SetOperation(usint op) {
+    //     operation = op;
+    // }
+
+    // size_t GetOperation() const {
+    //     return operation;
+    // }
+
 private:
     enum State { GARBAGE, INITIALIZED };
 
@@ -638,6 +649,8 @@ private:
     bool IndexCheck(size_t length) const {
         return length < m_data.size();
     }
+
+    // uint32_t operation;
 };
 
 }  // namespace bigintdyn

@@ -229,6 +229,7 @@ mubintvec<ubint_el_t> mubintvec<ubint_el_t>::ModAdd(const ubint_el_t& b) const {
 
 template <class ubint_el_t>
 mubintvec<ubint_el_t>& mubintvec<ubint_el_t>::ModAddEq(const ubint_el_t& b) {
+    std::cout << "mubintvecdy ubint_el" << std::endl;
     auto modulus{m_modulus};
     auto bLocal{b};
     if (bLocal >= modulus)
@@ -265,6 +266,7 @@ mubintvec<ubint_el_t> mubintvec<ubint_el_t>::ModAdd(const mubintvec& b) const {
 
 template <class ubint_el_t>
 mubintvec<ubint_el_t>& mubintvec<ubint_el_t>::ModAddEq(const mubintvec& b) {
+    std::cout << "mubintvecdy mubintvec" << std::endl;
     if (m_modulus != b.m_modulus)
         OPENFHE_THROW(lbcrypto::math_error, "mubintvec adding vectors of different moduli");
     if (m_data.size() != b.m_data.size())
