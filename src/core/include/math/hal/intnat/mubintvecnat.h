@@ -127,7 +127,7 @@ private:
 #else
     xvector<IntegerType> m_data;
 #endif
-    // uint32_t operation;
+    uint32_t operation;
     // function to check if the index is a valid index.
     bool IndexCheck(size_t length) const {
         return length < m_data.size();
@@ -145,13 +145,13 @@ public:
     // /*  The functions setOperation and getOperation 
     //     are function accessing my variable operations
     // */
-    // void SetOperation(usint op) {
-    //     operation = op;
-    // }
+    void SetOperation(usint op) {
+        operation = op;
+    }
 
-    // size_t GetOperation() const {
-    //     return operation;
-    // }
+    size_t GetOperation() const {
+        return operation;
+    }
 
     /**
    * Basic constructor for specifying the length of the vector.
