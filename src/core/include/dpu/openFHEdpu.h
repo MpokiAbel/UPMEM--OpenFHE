@@ -9,7 +9,8 @@
         #define DPU_BINARY "./src/core/dpu/mubintvecnat_dpu"
     #endif
 
-    #define LOG(x) std::cout << x << std::endl
+    #define LOG(x)     std::cout << x << std::endl
+    #define LOGv(x, y) std::cout << x << y << std::endl
 using namespace dpu;
 
 /* get_data() This function is made to extract the data from the type of data representations available i.e 
@@ -68,43 +69,53 @@ int run_on_pim(Element* a, const Element& b) {
     std::ofstream outFile("logs.txt", std::ios::app);  // Log file opened in append mode
 
     try {
-        LOG("\nEntry to run dpu");
+        // LOG("\nEntry to run dpu");
         // Allocation and initialization
-        const int num_dpus  = 1;  // Assuming a single DPU for simplicity; adjust as needed
-        auto system         = DpuSet::allocate(num_dpus, "backend=simulator");  // Allocate DPUs
-        auto dpus_allocated = system.dpus().size();             // Number of successfully allocated DPUs
+        const int num_dpus  = 1;                           // Assuming a single DPU for simplicity; adjust as needed
+        auto system         = DpuSet::allocate(num_dpus);  // Allocate DPUs
+        auto dpus_allocated = system.dpus().size();        // Number of successfully allocated DPUs
         auto data_size      = a->GetLength() / dpus_allocated;  // Calculate data size per DPU
         auto size_to_copy   = data_size * sizeof(uint64_t);     // size of data in bytes to copy
 
         // Data preparation
         auto data = get_data(*a, b, dpus_allocated);  // Retrieve data to be processed
-        std::vector<std::vector<uint64_t>> results{dpus_allocated,
-                                                   std::vector<uint64_t>(data_size)};  // Container for DPU results
+        std::vector<std::vector<uint64_t>> data_results{
+            dpus_allocated, std::vector<uint64_t>(data_size)};  // Container for DPU data results
+        std::vector<std::vector<uint32_t>> cycle_results{dpus_allocated,
+                                                         std::vector<uint32_t>(1)};  // Container for DPU time results
+        std::vector<std::vector<uint32_t>> clocks_per_sec{dpus_allocated,
+                                                          std::vector<uint32_t>(1)};  // Container for DPU time results
 
         // Load binary to DPUs
         system.load(DPU_BINARY);
 
         // Copy data to DPUs
         system.copy("mram_modulus", std::get<2>(data));
-        std::cout << "Allocated dpus: " << dpus_allocated << " Data Size: " << data_size << " size to copy "
-                  << size_to_copy << std::endl;
+        // std::cout << "Allocated dpus: " << dpus_allocated << " Data Size: " << data_size << " size to copy "
+        //           << size_to_copy << std::endl;
 
         for (size_t index = 0; index < dpus_allocated; ++index) {
             system.dpus()[index]->copy("mram_array_1", std::get<0>(data)[index]);
             system.dpus()[index]->copy("mram_array_2", std::get<1>(data)[index]);
         }
-        LOG("Done copying !!");
+        // LOG("Done copying !!");
 
         // Execute the loaded program on all DPUs
         system.exec();
         system.log(outFile);
 
         // Copy results from DPUs
-        system.copy(results, size_to_copy, "mram_array_1");
-        LOG("Done fetching from DPU !! \n");
+        system.copy(data_results, size_to_copy, "mram_array_1");
+        system.copy(cycle_results, sizeof(uint32_t), "nb_cycles");
+        system.copy(clocks_per_sec, sizeof(uint32_t), "CLOCKS_PER_SEC");
+        // LOG("Done fetching from DPU !! \n");
+
+        for (size_t i = 0; i < dpus_allocated; i++) {
+            LOGv("Time to run in the DPU", (double)cycle_results[i][0] / clocks_per_sec[i][0]);
+        }
 
         // Post-processing
-        set_data<Element, uint64_t>(a, results);
+        set_data<Element, uint64_t>(a, data_results);
 
         ret = 1;
     }

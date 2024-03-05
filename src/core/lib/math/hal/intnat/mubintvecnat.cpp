@@ -248,14 +248,14 @@ NativeVectorT<IntegerType>& NativeVectorT<IntegerType>::ModAddEq(const NativeVec
     auto mv{m_modulus};
 
 #ifdef RUN_ON_DPU
-    int ret = run_on_pim(this, b);
-    if (!ret)
+    std::cout << (operation == 1 ? "Operation of addition" : "Operation without addition flag") << std::endl;
+    if (operation == 1 && !run_on_pim(this, b))
         std::cout << "Run On DPU failed" << std::endl;
-#else
-
-    for (size_t i = 0; i < m_data.size(); ++i)
-        m_data[i].ModAddFastEq(b[i], mv);
+    else
 #endif
+        for (size_t i = 0; i < m_data.size(); ++i)
+            m_data[i].ModAddFastEq(b[i], mv);
+
     return *this;
 }
 

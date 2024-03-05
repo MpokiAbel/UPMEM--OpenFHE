@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <defs.h>
 #include <alloc.h>
+#include <perfcounter.h>
 #include "helper_functions.h"
 
 /*
@@ -16,8 +17,10 @@
 __mram_noinit uint8_t mram_array_1[BUFFER_SIZE];
 __mram_noinit uint8_t mram_array_2[BUFFER_SIZE];
 __dma_aligned __host uint64_t mram_modulus;
+__dma_aligned  __host uint32_t nb_cycles;
 
 int main() {
+    perfcounter_config(COUNT_CYCLES, true);
     __dma_aligned uint8_t local_array_1[CACHE_SIZE];
     __dma_aligned uint8_t local_array_2[CACHE_SIZE];
 
@@ -32,7 +35,7 @@ int main() {
 
         // printf("\nTasklet %u %d \n", me(), NR_TASKLETS);
     }
-
     printf("\nDone adding in the DPU\n");
-    mem_reset();
+
+    nb_cycles = perfcounter_get();
 }

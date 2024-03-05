@@ -48,6 +48,7 @@
 #include "utils/utilities-int.h"
 // #include "openFHEdpu.h"
 
+#include <iostream>
 #include <ostream>
 #include <memory>
 #include <string>
@@ -411,6 +412,8 @@ DCRTPolyImpl<VecType>& DCRTPolyImpl<VecType>::operator+=(const DCRTPolyImpl& rhs
     size_t size{m_vectors.size()};
 
     if (operation == 1) {
+        std::cout << "incoming addition" << std::endl;
+#pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(size))
         for (size_t i = 0; i < size; ++i) {
             m_vectors[i].SetOperation(operation);
             m_vectors[i] += rhs.m_vectors[i];

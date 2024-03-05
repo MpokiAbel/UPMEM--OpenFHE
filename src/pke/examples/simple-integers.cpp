@@ -88,8 +88,8 @@ int main() {
     // std::cout<<"I am about to do addition"<<std::endl;
     // Homomorphic additions
 
-    // ciphertext1->SetOperation(1);
-    // ciphertext2->SetOperation(1);
+    ciphertext1->SetOperation(1);
+    ciphertext2->SetOperation(1);
 
     auto start                                        = std::chrono::high_resolution_clock::now();
     auto ciphertextAddResult                          = cryptoContext->EvalAdd(ciphertext1, ciphertext2);
