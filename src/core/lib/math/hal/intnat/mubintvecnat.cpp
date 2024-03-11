@@ -39,7 +39,7 @@
 #include "math/nbtheory-impl.h"
 
 #include "utils/exception.h"
-#include "dpu/openFHEdpu.h"
+// #include "dpu/PimManager.h"
 
 namespace intnat {
 
@@ -248,13 +248,14 @@ NativeVectorT<IntegerType>& NativeVectorT<IntegerType>::ModAddEq(const NativeVec
     auto mv{m_modulus};
 
 #ifdef RUN_ON_DPU
-    std::cout << (operation == 1 ? "Operation of addition" : "Operation without addition flag") << std::endl;
-    if (operation == 1 && !run_on_pim(this, b))
-        std::cout << "Run On DPU failed" << std::endl;
-    else
+    // // std::cout << (operation == 1 ? "Operation of addition" : "Operation without addition flag") << std::endl;
+    // PimManager dpus(2);
+    // if (operation == 1 && !dpus.Run_On_Pim(this, b))
+    //     std::cout << "Run On DPU failed" << std::endl;
+    // else
 #endif
-        for (size_t i = 0; i < m_data.size(); ++i)
-            m_data[i].ModAddFastEq(b[i], mv);
+    for (size_t i = 0; i < m_data.size(); ++i)
+        m_data[i].ModAddFastEq(b[i], mv);
 
     return *this;
 }

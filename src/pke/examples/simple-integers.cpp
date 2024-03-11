@@ -33,15 +33,27 @@
   Simple example for BFVrns (integer arithmetic)
  */
 #include "openfhe.h"
+#include <cstddef>
 #include <iostream>
 #include <chrono>
 
 using namespace lbcrypto;
 
+template <typename T>
+double VectorSizeInMB(const std::vector<T>& v) {
+    // Size of the vector in bytes = number of elements * size of each element
+    size_t totalSizeInBytes = v.size() * sizeof(T);
+
+    // Convert bytes to megabytes
+    double totalSizeInMB = static_cast<double>(totalSizeInBytes) / (1024 * 1024);
+
+    return totalSizeInMB;
+}
+
 int main() {
     // Sample Program: Step 1: Set CryptoContext
     CCParams<CryptoContextBFVRNS> parameters;
-    parameters.SetPlaintextModulus(65537);
+    parameters.SetPlaintextModulus(786433);
     parameters.SetMultiplicativeDepth(2);
 
     CryptoContext<DCRTPoly> cryptoContext = GenCryptoContext(parameters);
@@ -66,12 +78,26 @@ int main() {
 
     // Sample Program: Step 3: Encryption
 
+    size_t size = 12;
     // First plaintext vector is encoded
-    std::vector<int64_t> vectorOfInts1 = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-    Plaintext plaintext1               = cryptoContext->MakePackedPlaintext(vectorOfInts1);
+    std::vector<int64_t> vectorOfInts1;
+    vectorOfInts1.reserve(size);
+
     // Second plaintext vector is encoded
-    std::vector<int64_t> vectorOfInts2 = {3, 2, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-    Plaintext plaintext2               = cryptoContext->MakePackedPlaintext(vectorOfInts2);
+    std::vector<int64_t> vectorOfInts2;
+    vectorOfInts2.reserve(size);
+
+    for (size_t i = 0; i < size; i++) {
+        vectorOfInts1.push_back(1);
+        vectorOfInts2.push_back(2);
+    }
+
+    std::cout << "Total size of the message in MB: " << VectorSizeInMB(vectorOfInts1) << std::endl;
+
+    Plaintext plaintext2 = cryptoContext->MakePackedPlaintext(vectorOfInts2);
+
+    Plaintext plaintext1 = cryptoContext->MakePackedPlaintext(vectorOfInts1);
+
     // Third plaintext vector is encoded
     // std::vector<int64_t> vectorOfInts3 = {1, 2, 5, 2, 5, 6, 7, 8, 9, 10, 11, 12};
     // Plaintext plaintext3               = cryptoContext->MakePackedPlaintext(vectorOfInts3);
@@ -83,19 +109,22 @@ int main() {
     // auto ciphertext3 = cryptoContext->Encrypt(keyPair.publicKey, plaintext3);
     // std::cout<<"Finished Encryption"<<std::endl;
 
+    std::cout << "Total size of the message in MB: " << VectorSizeInMB(ciphertext1->GetElements()) << std::endl;
+
     // Sample Program: Step 4: Evaluation
 
     // std::cout<<"I am about to do addition"<<std::endl;
     // Homomorphic additions
 
-    ciphertext1->SetOperation(1);
-    ciphertext2->SetOperation(1);
-
-    auto start                                        = std::chrono::high_resolution_clock::now();
-    auto ciphertextAddResult                          = cryptoContext->EvalAdd(ciphertext1, ciphertext2);
-    auto end                                          = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> elapsed = end - start;
-    std::cout << "EvalAdd takes " << elapsed.count() << " milliseconds.\n";
+    // ciphertext1->SetOperation(1);
+    // ciphertext2->SetOperation(1);
+    // PimManager pim(2);
+    // std::cout << "Number of DPUS " << pim.GetNumDpus() << std::endl;
+    auto start                            = std::chrono::high_resolution_clock::now();
+    auto ciphertextAddResult              = cryptoContext->EvalAdd(ciphertext1, ciphertext2);
+    auto end                              = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "EvalAdd takes " << elapsed.count() << " seconds.\n";
 
     // auto ciphertextAddResult = cryptoContext->EvalAdd(ciphertextAdd12, ciphertext3);
     // std::cout<<"Finished addition"<<std::endl;
@@ -141,7 +170,7 @@ int main() {
 
     // // Output results
     std::cout << "\nResults of homomorphic computations" << std::endl;
-    std::cout << "#1 + #2 + #3: " << plaintextAddResult << std::endl;
+    // std::cout << "#1 + #2 + #3: " << plaintextAddResult << std::endl;
     // std::cout << "#1 * #2 * #3: " << plaintextMultResult << std::endl;
     // std::cout << "Left rotation of #1 by 1: " << plaintextRot1 << std::endl;
     // std::cout << "Left rotation of #1 by 2: " << plaintextRot2 << std::endl;

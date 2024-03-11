@@ -412,7 +412,7 @@ public:
         operation = op;
     }
 
-    size_t GetOperation() const{
+    size_t GetOperation() const {
         return operation;
     }
 

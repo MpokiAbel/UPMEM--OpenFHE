@@ -41,7 +41,6 @@
 
 #include "metadata.h"
 #include "key/key.h"
-
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -590,7 +589,7 @@ public:
         operation = op;
     }
 
-    size_t GetOperation() const{
+    size_t GetOperation() const {
         return operation;
     }
 

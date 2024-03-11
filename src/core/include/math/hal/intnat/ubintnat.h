@@ -61,11 +61,6 @@
 #include <vector>
 #include <utility>
 
-// #include <dpu>
-// #include <iostream>
-
-// using namespace dpu;
-// #include "UPMEM-OpenFHE/src/dpu/include/openFHEdpu.h"
 
 // the default behavior of the native integer layer is
 // to assume that the user does not need bounds/range checks

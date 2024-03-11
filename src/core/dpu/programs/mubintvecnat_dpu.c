@@ -1,39 +1,40 @@
 #include <stddef.h>
 #include <mram.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <defs.h>
 #include <alloc.h>
 #include <perfcounter.h>
+#include <alloc.h>
 #include "helper_functions.h"
 
-/*
-    We represent a buffer to have a size of 64 KB and handle the computations on 64 bits basis after.
-    The cache maximum number of bytes is 2048 (2KB) and we initialize it with that.
-*/
+#define CACHE_SIZE (1 << 11)
 
-#define BUFFER_SIZE (1 << 16)
-#define CACHE_SIZE  256
-
-__mram_noinit uint8_t mram_array_1[BUFFER_SIZE];
-__mram_noinit uint8_t mram_array_2[BUFFER_SIZE];
-__dma_aligned __host uint64_t mram_modulus;
-__dma_aligned  __host uint32_t nb_cycles;
+__host uint64_t mram_modulus;
+__host uint32_t nb_cycles;
+__host uint64_t data_copied_in_bytes;
 
 int main() {
     perfcounter_config(COUNT_CYCLES, true);
-    __dma_aligned uint8_t local_array_1[CACHE_SIZE];
-    __dma_aligned uint8_t local_array_2[CACHE_SIZE];
 
-    for (unsigned int bytes_index = me() * CACHE_SIZE; bytes_index < BUFFER_SIZE;
+    unsigned int tasklet_id = me();
+    if (tasklet_id == 0) {
+        mem_reset();  // Resets the heap
+    }
+    uint64_t* cache_A = (uint64_t*)mem_alloc(CACHE_SIZE);
+    uint64_t* cache_B = (uint64_t*)mem_alloc(CACHE_SIZE);
+
+    uint64_t mram_base_addr_A = (uint64_t)DPU_MRAM_HEAP_POINTER;
+    uint64_t mram_base_addr_B = (uint64_t)(DPU_MRAM_HEAP_POINTER + data_copied_in_bytes);
+
+    for (unsigned int bytes_index = tasklet_id * CACHE_SIZE; bytes_index < data_copied_in_bytes;
          bytes_index += CACHE_SIZE * NR_TASKLETS) {
-        mram_read(&mram_array_1[bytes_index], local_array_1, CACHE_SIZE);
-        mram_read(&mram_array_2[bytes_index], local_array_2, CACHE_SIZE);
+        mram_read((__mram_ptr void const*)(mram_base_addr_A + bytes_index), cache_A, CACHE_SIZE);
+        mram_read((__mram_ptr void const*)(mram_base_addr_B + bytes_index), cache_B, CACHE_SIZE);
 
-        ModAddEq((uint64_t*)local_array_1, (uint64_t*)local_array_2, mram_modulus, CACHE_SIZE / sizeof(uint64_t));
+        ModAddEq(cache_A, cache_B, mram_modulus, CACHE_SIZE / sizeof(uint64_t));
 
-        mram_write(local_array_1, &mram_array_1[bytes_index], CACHE_SIZE);
-
-        // printf("\nTasklet %u %d \n", me(), NR_TASKLETS);
+        mram_write(cache_A, (__mram_ptr void*)(mram_base_addr_A + bytes_index), CACHE_SIZE);
     }
     printf("\nDone adding in the DPU\n");
 

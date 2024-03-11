@@ -8,8 +8,6 @@ file (GLOB_RECURSE CORE_SRC_FILES CONFIGURE_DEPENDS lib/*.c lib/*.cpp lib/utils/
 list(APPEND CORE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 list(APPEND CORE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 
-# include_directories(${DPU_INCLUDE_DIRS})
-
 include_directories(${CORE_INCLUDE_DIRS})
 set(CORE_INCLUDE_DIRS "${CORE_INCLUDE_DIRS}" CACHE INTERNAL "")
 
@@ -50,6 +48,8 @@ add_custom_target( allcore )
 if( BUILD_SHARED )
 set (CORELIBS PUBLIC OPENFHEcore ${THIRDPARTYLIBS} ${OpenMP_CXX_FLAGS})
 	target_link_libraries (OPENFHEcore ${THIRDPARTYLIBS} ${OpenMP_CXX_FLAGS})
+	target_include_directories(OPENFHEcore PRIVATE "/usr/include/dpu")
+	target_link_directories(OPENFHEcore PRIVATE "/usr/lib/")
 	add_dependencies( allcore OPENFHEcore)
 endif()
 

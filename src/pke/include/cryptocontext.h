@@ -226,13 +226,13 @@ class CryptoContextImpl : public Serializable {
             if (cryptoParams->GetScalingTechnique() == FLEXIBLEAUTOEXT && level == 0) {
                 scf = cryptoParams->GetScalingFactorIntBig(level);
                 p   = PlaintextFactory::MakePlaintext(value, encoding, this->GetElementParams(),
-                                                      this->GetEncodingParams(), getSchemeId(), 1, level, scf);
+                                                    this->GetEncodingParams(), getSchemeId(), 1, level, scf);
                 p->SetNoiseScaleDeg(2);
             }
             else {
                 scf = cryptoParams->GetScalingFactorInt(level);
                 p   = PlaintextFactory::MakePlaintext(value, encoding, this->GetElementParams(),
-                                                      this->GetEncodingParams(), getSchemeId(), depth, level, scf);
+                                                    this->GetEncodingParams(), getSchemeId(), depth, level, scf);
             }
         }
         else {

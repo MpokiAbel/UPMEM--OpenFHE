@@ -205,26 +205,28 @@ set(OpenFHE_PACKAGE_LIBS ${OpenFHE_STATIC_LIBS} ${OpenFHE_SHARED_LIBS})
 #--------------------------------------------------------------------
 # Here is the configuration for Integrating the DPU code
 #--------------------------------------------------------------------
-set(DPU_PKG_NAME "dpu")
-
 find_library(DPU_LIBRARY
-  NAMES ${DPU_PKG_NAME} dpu_lib # Possible names of the DPU library
-  HINTS "/path/to/custom/library" # Optional hints
+  NAMES dpu dpu_lib # Possible names of the DPU library
+  HINTS "/usr/lib/" # Optional hints
 )
-
+find_path(DPU_INCLUDE_DIR
+            NAMES dpu.h
+            PATHS "usr/"
+            PATH_SUFFIXES "include" "include/dpu"
+        )
 if(DPU_LIBRARY)
     if(RUN_ON_DPU)       
-        execute_process(COMMAND dpu-pkg-config --cflags ${DPU_PKG_NAME} OUTPUT_VARIABLE DPU_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-        execute_process(COMMAND dpu-pkg-config --libs ${DPU_PKG_NAME} OUTPUT_VARIABLE DPU_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
-        add_compile_options(${DPU_CFLAGS})
-        link_libraries (${DPU_LIBS})
+        get_filename_component(DPU_LIBRARY ${DPU_LIBRARY} DIRECTORY)
+        include_directories(${DPU_INCLUDE_DIR})
+        link_directories(${DPU_LIBRARY})
+        list(APPEND THIRDPARTYLIBS "dpu")
         add_definitions(-DRUN_ON_DPU)
+        message("DPU LIBRARY ${DPU_LIBRARY} and Path ${DPU_INCLUDE_DIR}")
         message( STATUS "RUN_ON_DPU:     ${RUN_ON_DPU}")
     endif()
 else()
     set(RUN_ON_DPU OFF)
     message( STATUS "RUN_ON_DPU:     ${RUN_ON_DPU}")
-
 endif()
 
 # Set these flags for debugging option -- useful for profiling 
