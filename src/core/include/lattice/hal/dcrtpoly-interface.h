@@ -51,8 +51,6 @@
 #include <utility>
 #include <vector>
 
-// #include "dpu/PimManager.h"
-
 namespace lbcrypto {
 
 /**

@@ -1,21 +1,26 @@
+#include <cstddef>
+#include <cstdint>
+#include <dpu>
+#include <iostream>
+#include <chrono>
+#include <tuple>
+#include <fstream>
+#include <string>
 
-#ifdef RUN_ON_DPU
-    #include <cstddef>
-    #include <cstdint>
-    #include <dpu.h>
-    #include <iostream>
-    #include <chrono>
-    #include <tuple>
-    #include <fstream>
-    #include <string>
+/* 
+    Custome include files 
+*/
+#include "Pim/PimManager.h"
+#include "math/hal/intnat/mubintvecnat.h"
 
-    #ifndef DPU_BINARY
-        #define DPU_BINARY "./src/core/dpu/mubintvecnat_dpu"
-    #endif
-    #ifndef LOG
-        #define LOG(x)     std::cout << x << std::endl
-        #define LOGv(x, y) std::cout << x << ": " << y << std::endl
-    #endif
+#ifndef DPU_BINARY
+    #define DPU_BINARY "./src/core/dpu/mubintvecnat_dpu"
+#endif
+
+#ifndef LOG
+    #define LOG(x)     std::cout << x << std::endl
+    #define LOGv(x, y) std::cout << x << ": " << y << std::endl
+#endif
 
 using namespace dpu;
 
@@ -25,7 +30,7 @@ using DvectorInt_64  = std::vector<uint64_t>;
 using DvectorInt_32  = std::vector<uint32_t>;
 using string         = std::string;
 
-class PimManager {
+class PimManager::PimManagerImpl {
 private:
     DpuSet system;
 
@@ -33,7 +38,7 @@ private:
         return DpuSet::allocate(num_dpus, profile);
     }
 
-    void Execute_On_Dpus(DpuSet& system) {
+    static void Execute_On_Dpus(DpuSet& system) {
         system.exec();
     }
 
@@ -118,25 +123,11 @@ private:
     }
 
 public:
-    PimManager(uint32_t num_dpus, const string& profile = "") : system(Allocate_Dpus(num_dpus, profile)) {
-        LOG("Manager Created");
-    }
+    PimManagerImpl(uint32_t num_dpus, const std::string& profile) : system(Allocate_Dpus(num_dpus, profile)) {}
 
-    ~PimManager() {
-        // Perform cleanup tasks
-        // For example, if you had dynamically allocated memory:
-        // delete pointerToSomeResource;
-
-        // Note: In this specific example, no explicit cleanup is needed
-        // because C++ automatically calls destructors for member objects
-        // (like `system`) when the containing object is destroyed.
-        LOG("Manager Destroyed");
-    }
-
-    void Load_Binary_To_Dpus(const string binary) {
+    void Load_Binary_To_Dpus(const std::string& binary) {
         system.load(binary);
     }
-
     size_t GetNumDpus() {
         return system.dpus().size();
     }
@@ -173,4 +164,29 @@ public:
     }
 };
 
-#endif
+PimManager::PimManager(uint32_t num_dpus, const std::string& profile) : PmImpl(new PimManagerImpl(num_dpus, profile)) {
+    // Constructor implementation if needed
+    std::cout << "DPUs created " << PmImpl->GetNumDpus() << std::endl;
+}
+
+PimManager::~PimManager() {
+    std::cout << "DPUs deleted" << std::endl;
+    delete PmImpl;
+}
+
+void PimManager::Load_Binary_To_Dpus(const std::string& binary) {
+    PmImpl->Load_Binary_To_Dpus(binary);
+}
+
+size_t PimManager::GetNumDpus() {
+    return PmImpl->GetNumDpus();
+}
+
+template <typename Element>
+int PimManager::Run_On_Pim(Element* a, const Element& b) {
+    return PmImpl->Run_On_Pim(a, b);
+}
+
+// // Explicit instantiation of the template for the specific type you are using.
+template int PimManager::Run_On_Pim(intnat::NativeVectorT<intnat::NativeIntegerT<unsigned long>>* a,
+                                    const intnat::NativeVectorT<intnat::NativeIntegerT<unsigned long>>& b);
