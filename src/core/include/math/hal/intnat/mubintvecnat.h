@@ -50,6 +50,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "Pim/PimManager.h"
 
 // the following should be set to 1 in order to have native vector use block
 // allocations then determine if you want dynamic or static allocations by
@@ -127,7 +128,7 @@ private:
 #else
     xvector<IntegerType> m_data;
 #endif
-    uint32_t operation;
+    std::shared_ptr<PimManager> pim;
     // function to check if the index is a valid index.
     bool IndexCheck(size_t length) const {
         return length < m_data.size();
@@ -142,15 +143,17 @@ public:
         return NativeVectorT(1, modulus, val);
     }
 
-    // /*  The functions setOperation and getOperation 
+    // /*  The functions setOperation and getOperation
     //     are function accessing my variable operations
     // */
-    void SetOperation(usint op) {
-        operation = op;
+    void SetPim(std::shared_ptr<PimManager> newPim) {
+        // std::cout << "Pim is Set" << std::endl;
+        pim = newPim;
     }
 
-    size_t GetOperation() const {
-        return operation;
+    std::shared_ptr<PimManager> GetPim() const {
+        // std::cout << "Pim is returned" << std::endl;
+        return pim;
     }
 
     /**

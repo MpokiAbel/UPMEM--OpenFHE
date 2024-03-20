@@ -48,6 +48,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <Pim/PimManager.h>
 
 namespace lbcrypto {
 /**
@@ -468,7 +469,7 @@ public:
         cRes->SetScalingFactor(this->GetScalingFactor());
         cRes->SetScalingFactorInt(this->GetScalingFactorInt());
         cRes->SetSlots(this->GetSlots());
-        cRes->SetOperation(this->GetOperation());
+        cRes->SetPim(this->GetPim());
 
         return cRes;
     }
@@ -585,19 +586,20 @@ public:
         return 1;
     }
 
-    void SetOperation(usint op) {
-        operation = op;
+    void SetPim(std::shared_ptr<PimManager> newPim) {
+        pim = newPim;
     }
 
-    size_t GetOperation() const {
-        return operation;
+    std::shared_ptr<PimManager> GetPim() const {
+        // std::cout << "Pim is returned" << std::endl;
+        return pim;
     }
 
 private:
     // vector of ring elements for this Ciphertext
     std::vector<Element> m_elements;
 
-    uint32_t operation = 0;
+    std::shared_ptr<PimManager> pim;
 
     // the degree of the scaling factor for the encrypted message.
     uint32_t m_noiseScaleDeg = 1;

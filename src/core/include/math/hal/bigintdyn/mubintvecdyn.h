@@ -45,6 +45,7 @@
         #include "utils/exception.h"
         #include "utils/inttypes.h"
         #include "utils/serializable.h"
+        #include "Pim/PimManager.h"
 
         #include <initializer_list>
         #include <iostream>
@@ -628,12 +629,14 @@ public:
     /*  The functions setOperation and getOperation 
         are function accessing my variable operations
     */
-    void SetOperation(usint op) {
-        operation = op;
+    void SetPim(std::shared_ptr<PimManager> newPim) {
+        // std::cout << "Pim is Set" << std::endl;
+        pim = newPim;
     }
 
-    size_t GetOperation() const {
-        return operation;
+    std::shared_ptr<PimManager> GetPim() const {
+        // std::cout << "Pim is returned" << std::endl;
+        return pim;
     }
 
 private:
@@ -650,7 +653,7 @@ private:
         return length < m_data.size();
     }
 
-    uint32_t operation;
+    std::shared_ptr<PimManager> pim;
 };
 
 }  // namespace bigintdyn

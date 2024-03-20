@@ -1,5 +1,5 @@
-
-
+#include <cstddef>
+#include <cstdint>
 #define PROFILE
 #define _USE_MATH_DEFINES
 #include "scheme/bfvrns/cryptocontext-bfvrns.h"
@@ -13,6 +13,7 @@
 #include <iterator>
 #include <limits>
 #include <random>
+#include <unistd.h>  // for linux
 
 using namespace lbcrypto;
 
@@ -23,7 +24,9 @@ using namespace lbcrypto;
 CryptoContext<DCRTPoly> GenerateBFVrnsContext() {
     CCParams<CryptoContextBFVRNS> parameters;
     parameters.SetPlaintextModulus(65537);
-    parameters.SetScalingModSize(60);
+    parameters.SetMultiplicativeDepth(4);
+    // parameters.SetScalingModSize(60);
+    parameters.SetSecurityLevel(HEStd_256_classic);
 
     CryptoContext<DCRTPoly> cc = GenCryptoContext(parameters);
     // Enable features that you wish to use
@@ -34,12 +37,11 @@ CryptoContext<DCRTPoly> GenerateBFVrnsContext() {
     return cc;
 }
 
-
 /*
     Evaluation of BFVrns_Add
 */
 
-void BFVrns_Add(benchmark::State& state) {
+void BFVrns_Add_CPU(benchmark::State& state) {
     CryptoContext<DCRTPoly> cc = GenerateBFVrnsContext();
 
     KeyPair<DCRTPoly> keyPair = cc->KeyGen();
@@ -55,12 +57,13 @@ void BFVrns_Add(benchmark::State& state) {
 
     while (state.KeepRunning()) {
         auto ciphertextAdd = cc->EvalAdd(ciphertext1, ciphertext2);
+        benchmark::DoNotOptimize(ciphertextAdd);
     }
 }
-BENCHMARK(BFVrns_Add)->Unit(benchmark::kMicrosecond);
 
+BENCHMARK(BFVrns_Add_CPU)->Unit(benchmark::kMillisecond);
 
-void BFVrns_Add_upmem(benchmark::State& state) {
+void BFVrns_Add_Pim(benchmark::State& state) {
     CryptoContext<DCRTPoly> cc = GenerateBFVrnsContext();
 
     KeyPair<DCRTPoly> keyPair = cc->KeyGen();
@@ -74,15 +77,24 @@ void BFVrns_Add_upmem(benchmark::State& state) {
     auto ciphertext1 = cc->Encrypt(keyPair.publicKey, plaintext1);
     auto ciphertext2 = cc->Encrypt(keyPair.publicKey, plaintext2);
 
-    ciphertext1->SetOperation(1);
-    ciphertext2->SetOperation(1);
+    // Calculate data size to be offloaded to DPUs
+    size_t sizev = ciphertext1->GetElements()[0].GetAllElements().size();
+
+    size_t dataSize =
+        sizev * ciphertext1->GetElements()[0].GetAllElements()[0].GetValues().GetLength() * sizeof(std::uint64_t);
+
+    std::cout << "Data Size is " << dataSize / (1024 * 1024) << "MB" << std::endl;
+
+    std::shared_ptr<PimManager> pim = std::make_shared<PimManager>(sizev * 32);
+
+    ciphertext1->SetPim(pim);
 
     while (state.KeepRunning()) {
         auto ciphertextAdd = cc->EvalAdd(ciphertext1, ciphertext2);
+        benchmark::DoNotOptimize(ciphertextAdd);
     }
 }
 
-BENCHMARK(BFVrns_Add_upmem)->Unit(benchmark::kMicrosecond);
-
+BENCHMARK(BFVrns_Add_Pim)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();

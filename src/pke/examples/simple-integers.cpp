@@ -53,7 +53,7 @@ double VectorSizeInMB(const std::vector<T>& v) {
 int main() {
     // Sample Program: Step 1: Set CryptoContext
     CCParams<CryptoContextBFVRNS> parameters;
-    parameters.SetPlaintextModulus(786433);
+    parameters.SetPlaintextModulus(65537);
     parameters.SetMultiplicativeDepth(2);
 
     CryptoContext<DCRTPoly> cryptoContext = GenCryptoContext(parameters);
@@ -88,43 +88,51 @@ int main() {
     vectorOfInts2.reserve(size);
 
     for (size_t i = 0; i < size; i++) {
-        vectorOfInts1.push_back(1);
-        vectorOfInts2.push_back(2);
+        vectorOfInts1.push_back(2);
+        vectorOfInts2.push_back(1);
     }
 
-    std::cout << "Total size of the message in MB: " << VectorSizeInMB(vectorOfInts1) << std::endl;
-
+    // std::cout << "Total size of the message in MB: " << VectorSizeInMB(vectorOfInts1) << std::endl;
+    // auto start           = timeNow();
     Plaintext plaintext2 = cryptoContext->MakePackedPlaintext(vectorOfInts2);
 
     Plaintext plaintext1 = cryptoContext->MakePackedPlaintext(vectorOfInts1);
-
+    // auto end             = timeNow();
+    // std::cout << "Plaintext encoding takes " << duration_ms(end - start) << " ms.\n";
     // Third plaintext vector is encoded
     // std::vector<int64_t> vectorOfInts3 = {1, 2, 5, 2, 5, 6, 7, 8, 9, 10, 11, 12};
     // Plaintext plaintext3               = cryptoContext->MakePackedPlaintext(vectorOfInts3);
 
     // std::cout<<"I am about to do Encryption"<<std::endl;
     // The encoded vectors are encrypted
+
     auto ciphertext1 = cryptoContext->Encrypt(keyPair.publicKey, plaintext1);
     auto ciphertext2 = cryptoContext->Encrypt(keyPair.publicKey, plaintext2);
+
     // auto ciphertext3 = cryptoContext->Encrypt(keyPair.publicKey, plaintext3);
     // std::cout<<"Finished Encryption"<<std::endl;
-
-    std::cout << "Total size of the message in MB: " << VectorSizeInMB(ciphertext1->GetElements()) << std::endl;
 
     // Sample Program: Step 4: Evaluation
 
     // std::cout<<"I am about to do addition"<<std::endl;
     // Homomorphic additions
 
-    // ciphertext1->SetOperation(1);
-    // ciphertext2->SetOperation(1);
-    // PimManager pim(2);
-    // std::cout << "Number of DPUS " << pim.GetNumDpus() << std::endl;
-    auto start                            = std::chrono::high_resolution_clock::now();
-    auto ciphertextAddResult              = cryptoContext->EvalAdd(ciphertext1, ciphertext2);
-    auto end                              = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "EvalAdd takes " << elapsed.count() << " seconds.\n";
+    // std::vector<std::shared_ptr<PimManager>> pim;
+    size_t sizev = ciphertext1->GetElements()[0].GetAllElements().size();  // Assuming this gets the intended size
+    // for (size_t i = 0; i < sizev; ++i) {
+    //     pim.push_back(std::make_shared<PimManager>(1));
+    // }
+
+    // ciphertext1->SetPim(pim);
+    // std::cout << "Number of DPUS " << pim->GetNumDpus() << std::endl;
+    std::cout << "The number of DPUs or towers " << sizev << std::endl;
+    std::shared_ptr<PimManager> pim = std::make_shared<PimManager>(sizev);
+    ciphertext1->SetPim(pim);
+
+    auto start               = timeNow();
+    auto ciphertextAddResult = cryptoContext->EvalAdd(ciphertext1, ciphertext2);
+    auto end                 = timeNow();
+    std::cout << "EvalAdd takes " << duration_ms(end - start) << " ms.\n";
 
     // auto ciphertextAddResult = cryptoContext->EvalAdd(ciphertextAdd12, ciphertext3);
     // std::cout<<"Finished addition"<<std::endl;
@@ -170,7 +178,7 @@ int main() {
 
     // // Output results
     std::cout << "\nResults of homomorphic computations" << std::endl;
-    // std::cout << "#1 + #2 + #3: " << plaintextAddResult << std::endl;
+    std::cout << "#1 + #2 + #3: " << plaintextAddResult << std::endl;
     // std::cout << "#1 * #2 * #3: " << plaintextMultResult << std::endl;
     // std::cout << "Left rotation of #1 by 1: " << plaintextRot1 << std::endl;
     // std::cout << "Left rotation of #1 by 2: " << plaintextRot2 << std::endl;

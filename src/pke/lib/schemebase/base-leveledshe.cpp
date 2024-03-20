@@ -608,8 +608,9 @@ void LeveledSHEBase<Element>::EvalAddCoreInPlace(Ciphertext<Element>& ciphertext
     size_t cSmallSize = std::min(c1Size, c2Size);
 
     for (size_t i = 0; i < cSmallSize; i++) {
-        if (ciphertext1->GetOperation() == 1) {
-            cv1[i].SetOperation(1);
+        if (ciphertext1->GetPim() != nullptr) {
+            // std::cout << "Pim is available" << std::endl;
+            cv1[i].SetPim(ciphertext1->GetPim());
         }
         cv1[i] += cv2[i];
     }

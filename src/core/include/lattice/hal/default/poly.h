@@ -53,6 +53,7 @@
 #include <utility>
 #include <vector>
 
+#include "Pim/PimManager.h"
 namespace lbcrypto {
 
 /**
@@ -352,12 +353,14 @@ public:
     /*  The functions setOperation and getOperation 
         are function accessing my variable operations
     */
-    void SetOperation(usint op) {
-        operation = op;
+    void SetPim(std::shared_ptr<PimManager> newPim) {
+        // std::cout << "Pim is Set" << std::endl;
+        pim = newPim;
     }
 
-    size_t GetOperation() const {
-        return operation;
+    std::shared_ptr<PimManager> GetPim() const {
+        // std::cout << "Pim is returned" << std::endl;
+        return pim;
     }
 
 protected:
@@ -365,7 +368,7 @@ protected:
     std::shared_ptr<Params> m_params{nullptr};
     std::unique_ptr<VecType> m_values{nullptr};
     void ArbitrarySwitchFormat();
-    uint32_t operation;
+    std::shared_ptr<PimManager> pim;
 };
 
 // TODO: fix issue with pke build system so this can be moved back to implementation file

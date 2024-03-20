@@ -75,8 +75,7 @@ public:
 
     DCRTPolyImpl() = default;
 
-    DCRTPolyImpl(const DCRTPolyType& e) noexcept
-        : m_params{e.m_params}, m_format{e.m_format}, m_vectors{e.m_vectors}, operation{0} {}
+    DCRTPolyImpl(const DCRTPolyType& e) noexcept : m_params{e.m_params}, m_format{e.m_format}, m_vectors{e.m_vectors} {}
     DCRTPolyType& operator=(const DCRTPolyType& rhs) noexcept override {
         m_params  = rhs.m_params;
         m_format  = rhs.m_format;
@@ -408,12 +407,12 @@ public:
     /*  The functions setOperation and getOperation 
         are function accessing my variable operations
     */
-    void SetOperation(usint op) {
-        operation = op;
+    void SetPim(std::shared_ptr<PimManager> newPim) {
+        pim = newPim;
     }
 
-    size_t GetOperation() const {
-        return operation;
+    std::shared_ptr<PimManager> GetPim() {
+        return pim;
     }
 
 protected:
@@ -427,7 +426,7 @@ protected:
         Multiplication == 2
         Rotation == 3 
     */
-    uint32_t operation;
+    std::shared_ptr<PimManager> pim;
 };
 
 }  // namespace lbcrypto

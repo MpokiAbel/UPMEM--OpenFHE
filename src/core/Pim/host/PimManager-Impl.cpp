@@ -1,3 +1,5 @@
+#include <stddef.h>
+#include <stdint.h>
 #include <cstddef>
 #include <cstdint>
 #include <dpu>
@@ -12,9 +14,12 @@
 */
 #include "Pim/PimManager.h"
 #include "math/hal/intnat/mubintvecnat.h"
+#include "utils/debug.h"
+#include "lattice/lat-hal.h"
+#include "support-host.h"
 
 #ifndef DPU_BINARY
-    #define DPU_BINARY "./src/core/dpu/mubintvecnat_dpu"
+    #define DPU_BINARY "./src/core/Pim/dpu/mubintvecnat_dpu"
 #endif
 
 #ifndef LOG
@@ -38,7 +43,7 @@ private:
         return DpuSet::allocate(num_dpus, profile);
     }
 
-    static void Execute_On_Dpus(DpuSet& system) {
+    void Execute_On_Dpus() {
         system.exec();
     }
 
@@ -47,83 +52,134 @@ private:
     }
 
     template <typename Element>
-    void Copy_Data_To_Dpus(DpuSet& system, Element* a, Element b) {
-        auto data_size             = a->GetLength() / GetNumDpus();  // Calculate data size per DPU
-        auto size_to_copy_in_bytes = data_size * sizeof(uint64_t);   // size of data in bytes to copy
-        auto data                  = GetData(*a, b, GetNumDpus());
+    void Copy_Data_To_Dpus(intnat::NativeVectorT<Element>* a, intnat::NativeVectorT<Element> b) {
+        auto size = a->GetLength() / GetNumDpus();  // Calculate data size per DPU, this number always has to divide
+        auto size_to_copy_in_bytes = size * sizeof(uint64_t);  // size of data in bytes to copy
+
+        TDvectorInt_64 a_data(GetNumDpus());
+        TDvectorInt_64 b_data(GetNumDpus());
+        DvectorInt_64 modulus{a->GetModulus().ConvertToInt()};
         DvectorInt_64 data_to_copy{size_to_copy_in_bytes};  //  The values in bytes of the data copied
 
-        // Copy data to DPUs
-        system.copy("mram_modulus", std::get<2>(data));
-        system.copy("data_copied", data_to_copy);
-
-        for (size_t index = 0; index < GetNumDpus(); ++index) {
-            system.dpus()[index]->copy(DPU_MRAM_HEAP_POINTER_NAME, 0, std::get<0>(data)[index], size_to_copy_in_bytes);
-            system.dpus()[index]->copy(DPU_MRAM_HEAP_POINTER_NAME, size_to_copy_in_bytes, std::get<1>(data)[index],
-                                       size_to_copy_in_bytes);
+        for (size_t i = 0; i < GetNumDpus(); i++) {
+            for (size_t j = 0; j < size; j++) {
+                a_data[i].push_back((*a).at((i * size) + j).ConvertToInt());
+                b_data[i].push_back(b.at((i * size) + j).ConvertToInt());
+            }
         }
+
+        // Copy data to DPUs
+        system.copy("mram_modulus", modulus);
+        system.copy("data_copied_in_bytes", data_to_copy);
+        system.copy(DPU_MRAM_HEAP_POINTER_NAME, 0, a_data, size_to_copy_in_bytes);
+        system.copy(DPU_MRAM_HEAP_POINTER_NAME, size_to_copy_in_bytes, b_data, size_to_copy_in_bytes);
+
+        // LOGv("Data copied ", a_data[0].size());
     }
 
     template <typename Element>
-    void Copy_Data_From_Dpus(DpuSet& system, Element* a) {
-        auto data_size             = a->GetLength() / GetNumDpus();  // Calculate data size per DPU
-        auto size_to_copy_in_bytes = data_size * sizeof(uint64_t);   // size of data in bytes to copy
+    void Copy_Data_To_Dpus(lbcrypto::DCRTPolyImpl<Element>* a, const lbcrypto::DCRTPolyImpl<Element>& b) {
+        auto& mv1 = a->GetAllElements();
+        auto& mv2 = b.GetAllElements();
 
-        // Retrieve data to be processed
-        TDvectorInt_64 data_results{GetNumDpus(), DvectorInt_64(data_size)};  // Container for DPU data results
-        TDvectorInt_32 cycle_results{GetNumDpus(), DvectorInt_32(1)};         // Container for DPU time results
-        TDvectorInt_32 clocks_per_sec{GetNumDpus(), DvectorInt_32(1)};  // Container for DPU clocks_per_sec results
+        TDvectorInt_64 buf1(GetNumDpus());
+        TDvectorInt_64 buf2(GetNumDpus());
+        TDvectorInt_64 mod(GetNumDpus());
 
-        // Copy results from DPUs
-        system.copy(data_results, size_to_copy_in_bytes, DPU_MRAM_HEAP_POINTER_NAME);
-        system.copy(cycle_results, sizeof(uint32_t), "nb_cycles");
-        system.copy(clocks_per_sec, sizeof(uint32_t), "CLOCKS_PER_SEC");
-        // LOG("Done fetching from DPU !! \n");
+        size_t m_vectorSize              = mv1.size();
+        size_t current_split_index       = 0;
+        size_t elements_in_current_split = 0;
+        size_t dpuSplit                  = (GetNumDpus() / m_vectorSize);
+        size_t towerElementCount         = mv1[0].GetValues().GetLength();
+        size_t towerSplitCount           = towerElementCount / dpuSplit;
 
-        for (size_t i = 0; i < GetNumDpus(); i++) {
-            LOGv("Time to run in the DPU ", (double)cycle_results[i].front() / clocks_per_sec[i].front());
+        // LOGv("Number of Splits ", dpuSplit);
+        // LOGv("Tower Split Count", towerSplitCount);
+#pragma omp parallel for num_threads(lbcrypto::OpenFHEParallelControls.GetThreadLimit(m_vectorSize))
+        for (size_t i = 0; i < m_vectorSize; ++i) {
+            for (size_t j = 0; j < towerElementCount; ++j) {
+                if (elements_in_current_split >= towerSplitCount) {
+                    ++current_split_index;
+                    elements_in_current_split = 0;
+                }
+
+                buf1[current_split_index].push_back(mv1[i].at(j).ConvertToInt());
+                buf2[current_split_index].push_back(mv2[i].at(j).ConvertToInt());
+                ++elements_in_current_split;
+            }
+
+            for (size_t k = i * dpuSplit; k < (i * dpuSplit) + dpuSplit; k++) {
+                mod[k].push_back(mv1[i].GetValues().GetModulus().ConvertToInt());
+            }
         }
 
-        // Post-processing
-        SetData<Element, uint64_t>(a, data_results);
+        size_t data_to_copy = towerSplitCount * sizeof(uint64_t);
+        DvectorInt_64 data_size_in_bytes{data_to_copy};
+
+        system.copy("mram_modulus", mod);
+        system.copy("data_copied_in_bytes", data_size_in_bytes);
+        system.copy(DPU_MRAM_HEAP_POINTER_NAME, 0, buf1, data_to_copy);
+        system.copy(DPU_MRAM_HEAP_POINTER_NAME, data_to_copy, buf2);
     }
 
-    template <class Element, typename IntType>
-    void SetData(Element* a, std::vector<std::vector<IntType>> results) {
+    template <typename Element>
+    void Copy_Data_From_Dpus(intnat::NativeVectorT<Element>* a) {
+        size_t size                  = a->GetLength() / GetNumDpus();  // Calculate data size per DPU
+        size_t size_to_copy_in_bytes = size * sizeof(uint64_t);        // size of data in bytes to copy
+
+        // Retrieve data to be processed
+        TDvectorInt_64 results(GetNumDpus(), DvectorInt_64(size));  // Container for DPU data results
+
+        // Copy results from DPUs
+        system.copy(results, size_to_copy_in_bytes, DPU_MRAM_HEAP_POINTER_NAME);
+
         size_t index = 0;
         for (const auto& innerVec : results) {
             for (auto elem : innerVec) {
-                (*a)[index].SetValue(std::to_string(elem));
+                // LOGv("Before ", (*a).at(index));
+                (*a).at(index) = elem;
+                // LOGv((*a).at(index), elem);
                 index++;
-                if (index >= a->GetLength())
+                if (index > a->GetLength())
                     break;
             }
-            if (index >= a->GetLength())
+            if (index > a->GetLength())
                 break;
         }
     }
 
     template <typename Element>
-    std::tuple<TDvectorInt_64, TDvectorInt_64, DvectorInt_64> GetData(Element& a, const Element& b, size_t n_buffers) {
-        size_t size = a.GetLength() / n_buffers;
+    void Copy_Data_From_Dpus(lbcrypto::DCRTPolyImpl<Element>* a) {
+        auto& mv = a->GetAllElements();
 
-        TDvectorInt_64 a_data(n_buffers);
-        TDvectorInt_64 b_data(n_buffers);
-        DvectorInt_64 modulus{a.GetModulus().toNativeInt()};
+        size_t m_vectorSize              = mv.size();
+        size_t current_split_index       = 0;
+        size_t elements_in_current_split = 0;
+        size_t dpuSplit                  = (GetNumDpus() / m_vectorSize);
+        size_t towerElementCount         = mv[0].GetValues().GetLength();
+        size_t towerSplitCount           = towerElementCount / dpuSplit;
+        size_t bytes                     = towerSplitCount * sizeof(uint64_t);
 
-        for (size_t i = 0; i < n_buffers; i++) {
-            a_data[i].reserve(size);
-            b_data[i].reserve(size);
-            for (size_t j = 0; j < size; j++) {
-                a_data[i].push_back(a[(i * size) + j].toNativeInt());
-                b_data[i].push_back(b[(i * size) + j].toNativeInt());
+        TDvectorInt_64 results(GetNumDpus(), DvectorInt_64(towerSplitCount));  // Container for DPU data results
+        system.copy(results, bytes, DPU_MRAM_HEAP_POINTER_NAME);
+
+// Set data on Each poly
+#pragma omp parallel for num_threads(lbcrypto::OpenFHEParallelControls.GetThreadLimit(m_vectorSize))
+        for (size_t i = 0; i < m_vectorSize; i++) {
+            for (size_t k = 0; k < towerElementCount; k++) {
+                if (elements_in_current_split >= towerSplitCount) {
+                    current_split_index++;
+                    elements_in_current_split = 0;
+                }
+                mv[i].at(k) = results[current_split_index][elements_in_current_split];
             }
         }
-        return std::make_tuple(a_data, b_data, modulus);
     }
 
 public:
-    PimManagerImpl(uint32_t num_dpus, const std::string& profile) : system(Allocate_Dpus(num_dpus, profile)) {}
+    PimManagerImpl(uint32_t num_dpus, const std::string& profile) : system(Allocate_Dpus(num_dpus, profile)) {
+        // LOG("DPUs Allocated");
+    }
 
     void Load_Binary_To_Dpus(const std::string& binary) {
         system.load(binary);
@@ -142,13 +198,28 @@ public:
             // LOG("\nEntry to run dpu");
 
             // Load binary to DPUs
+            // auto start = timeNow();
             Load_Binary_To_Dpus(DPU_BINARY);
+            // auto end = timeNow();
+            // LOGv("Load_Binary takes: ", duration_ms(end - start));
 
-            Copy_Data_To_Dpus(system, a, b);
+            // auto start = timeNow();
+            Copy_Data_To_Dpus(a, b);
+            // auto end = timeNow();
+            // LOGv("Copy data to DPUs takes: ", duration_ms(end - start));
+
             // Execute the loaded program on all DPUs
-            Execute_On_Dpus(system);
-            // system.log(outFile);
-            Copy_Data_From_Dpus(system, a);
+
+            // start = timeNow();
+            Execute_On_Dpus();
+            // end = timeNow();
+            // LOGv("Execute operations takes: ", duration_ms(end - start));
+            system.log(outFile);
+
+            // start = timeNow();
+            Copy_Data_From_Dpus(a);
+            // end = timeNow();
+            // LOGv("Copy data from DPUs takes: ", duration_ms(end - start));
 
             ret = 1;
         }
@@ -164,13 +235,14 @@ public:
     }
 };
 
+PimManager::PimManager() : PmImpl(nullptr) {}
 PimManager::PimManager(uint32_t num_dpus, const std::string& profile) : PmImpl(new PimManagerImpl(num_dpus, profile)) {
     // Constructor implementation if needed
-    std::cout << "DPUs created " << PmImpl->GetNumDpus() << std::endl;
+    // std::cout << "DPUs created " << PmImpl->GetNumDpus() << std::endl;
 }
 
 PimManager::~PimManager() {
-    std::cout << "DPUs deleted" << std::endl;
+    // std::cout << "DPUs deleted " << PmImpl->GetNumDpus() << std::endl;
     delete PmImpl;
 }
 
@@ -190,3 +262,15 @@ int PimManager::Run_On_Pim(Element* a, const Element& b) {
 // // Explicit instantiation of the template for the specific type you are using.
 template int PimManager::Run_On_Pim(intnat::NativeVectorT<intnat::NativeIntegerT<unsigned long>>* a,
                                     const intnat::NativeVectorT<intnat::NativeIntegerT<unsigned long>>& b);
+
+// template int PimManager::Run_On_Pim<lbcrypto::PolyImpl<intnat::NativeVectorT<intnat::NativeIntegerT<unsigned long>>>>(
+//     lbcrypto::PolyImpl<intnat::NativeVectorT<intnat::NativeIntegerT<unsigned long>>>* a,
+//     const lbcrypto::PolyImpl<intnat::NativeVectorT<intnat::NativeIntegerT<unsigned long>>>& b);
+
+// template int PimManager::Run_On_Pim<lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>>(
+//     lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>* a,
+//     lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>> const& b);
+
+template int PimManager::Run_On_Pim<lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>>(
+    lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>* a,
+    lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>> const& b);

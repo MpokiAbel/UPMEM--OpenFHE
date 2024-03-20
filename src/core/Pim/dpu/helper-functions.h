@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include "support-dpu.h"
 
 // This is the number of elements  that is to be copied from the host
 
