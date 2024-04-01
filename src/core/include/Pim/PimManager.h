@@ -1,6 +1,8 @@
 #ifndef PIMMANAGER_H
 #define PIMMANAGER_H
 
+#define ALLOCATE_ALL_DPUS 0
+
 #include <cstddef>
 class PimManager {
 public:
@@ -11,10 +13,14 @@ public:
     void Load_Binary_To_Dpus(const std::string& binary);
     size_t GetNumDpus();
 
-    PimManager& operator=(PimManager& other);
+    template <typename Element>
+    void Copy_Data_To_Dpus(Element* a, const Element& b, unsigned split = 1);
 
-    bool isPimNull() const;
-    
+    void Execute_On_Dpus();
+
+    template <typename Element>
+    void Copy_Data_From_Dpus(Element* a,unsigned split=1);
+
     template <typename Element>
     int Run_On_Pim(Element* a, const Element& b);
 

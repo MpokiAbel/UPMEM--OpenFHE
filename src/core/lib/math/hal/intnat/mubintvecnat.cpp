@@ -247,16 +247,19 @@ NativeVectorT<IntegerType>& NativeVectorT<IntegerType>::ModAddEq(const NativeVec
         OPENFHE_THROW(lbcrypto::math_error, "ModAddEq called on NativeVectorT's with different parameters.");
     auto mv{m_modulus};
 
-#ifdef RUN_ON_DPU
-    if (pim != nullptr && !pim->Run_On_Pim(this, b))
-        std::cout << "Run On DPU failed" << std::endl;
-    else
-        for (size_t i = 0; i < m_data.size(); ++i)
-            m_data[i].ModAddFastEq(b[i], mv);
-#else
-    // for (size_t i = 0; i < m_data.size(); ++i)
-    //     m_data[i].ModAddFastEq(b[i], mv);
-#endif
+    // #ifdef RUN_ON_DPU
+    //     if (pim != nullptr && !pim->Run_On_Pim(this, b))
+    //         std::cout << "Run On DPU failed" << std::endl;
+    //     else
+    //         for (size_t i = 0; i < m_data.size(); ++i)
+    //             m_data[i].ModAddFastEq(b[i], mv);
+    // #else
+    //     // for (size_t i = 0; i < m_data.size(); ++i)
+    //     //     m_data[i].ModAddFastEq(b[i], mv);
+    // #endif
+
+    for (size_t i = 0; i < m_data.size(); ++i)
+        m_data[i].ModAddFastEq(b[i], mv);
     return *this;
 }
 

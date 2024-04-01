@@ -118,21 +118,21 @@ int main() {
     // Homomorphic additions
 
     // std::vector<std::shared_ptr<PimManager>> pim;
-    size_t sizev = ciphertext1->GetElements()[0].GetAllElements().size();  // Assuming this gets the intended size
+    // size_t sizev = ciphertext1->GetElements()[0].GetAllElements().size();  // Assuming this gets the intended size
     // for (size_t i = 0; i < sizev; ++i) {
     //     pim.push_back(std::make_shared<PimManager>(1));
     // }
 
     // ciphertext1->SetPim(pim);
     // std::cout << "Number of DPUS " << pim->GetNumDpus() << std::endl;
-    std::cout << "The number of DPUs or towers " << sizev << std::endl;
-    std::shared_ptr<PimManager> pim = std::make_shared<PimManager>(sizev);
-    ciphertext1->SetPim(pim);
+    // std::cout << "The number of DPUs or towers " << sizev << std::endl;
+    // std::shared_ptr<PimManager> pim = std::make_shared<PimManager>(sizev);
+    // ciphertext1->SetPim(pim);
 
-    auto start               = timeNow();
+    // auto start               = timeNow();
     auto ciphertextAddResult = cryptoContext->EvalAdd(ciphertext1, ciphertext2);
-    auto end                 = timeNow();
-    std::cout << "EvalAdd takes " << duration_ms(end - start) << " ms.\n";
+    // auto end                 = timeNow();
+    // std::cout << "EvalAdd takes " << duration_ms(end - start) << " ms.\n";
 
     // auto ciphertextAddResult = cryptoContext->EvalAdd(ciphertextAdd12, ciphertext3);
     // std::cout<<"Finished addition"<<std::endl;

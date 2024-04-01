@@ -61,7 +61,6 @@
 #include <vector>
 #include <utility>
 
-
 // the default behavior of the native integer layer is
 // to assume that the user does not need bounds/range checks
 // in the native integer code
@@ -137,7 +136,7 @@ struct DataTypes<uint128_t> {
  * @tparam NativeInt native unsigned integer type
  */
 template <typename NativeInt>
-class NativeIntegerT final : public lbcrypto::BigIntegerInterface<NativeIntegerT<NativeInt>> {
+class NativeIntegerT final : public lbcrypto::BigIntegerInterface<NativeIntegerT<NativeInt> > {
 private:
     NativeInt m_value{0};
 
@@ -147,7 +146,7 @@ private:
     //    static constexpr usint m_uintBitLength{sizeof(NativeInt) * 8};
     static constexpr usint m_uintBitLength{std::numeric_limits<NativeInt>::digits};
 
-    friend class NativeVectorT<NativeIntegerT<NativeInt>>;
+    friend class NativeVectorT<NativeIntegerT<NativeInt> >;
 
 public:
     using Integer         = NativeInt;
@@ -165,11 +164,6 @@ public:
     };
 
     explicit operator NativeInt() const {
-        return m_value;
-    }
-
-    // ToDO: Its me who added this but learn how to use the operator above
-    NativeInt toNativeInt() const {
         return m_value;
     }
 
@@ -1404,6 +1398,7 @@ public:
     template <typename T = NativeInt>
     NativeIntegerT& ModMulFastEq(const NativeIntegerT& b, const NativeIntegerT& modulus, const NativeIntegerT& mu,
                                  typename std::enable_if_t<!std::is_same_v<T, DNativeInt>, bool> = true) {
+        // std::cout << sizeof(NativeInt) << " " << sizeof(DNativeInt) << std::endl;
         typeD tmp;
         MultD(m_value, b.m_value, tmp);
         auto rv{GetD(tmp)};

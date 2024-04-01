@@ -2,6 +2,7 @@
  * This code benchmarks polynomial operations for ring dimension of 1k.
  */
 
+#include <memory>
 #define _USE_MATH_DEFINES
 #include "vechelper.h"
 #include "lattice/lat-hal.h"
@@ -11,13 +12,18 @@
 
 #include "benchmark/benchmark.h"
 
+#define DPU_BINARY_DCRTadd "/home/pim/MPOKI/UPMEM-OpenFHE/build/src/core/Pim/dpu/mubintvecnat_dpu"
+#define DPU_BINARY_DCRTmul "/home/pim/MPOKI/UPMEM-OpenFHE/build/src/core/Pim/dpu/mubintvecnatmul_dpu"
+
 using namespace lbcrypto;
 
-static std::vector<usint> tow_args({1});
-
+static std::vector<usint> tow_args({1, 2, 4, 8, 16, 32});
+// static std::vector<usint> tow_args({1, 2, 4, 8});
+static std::vector<usint> dpu_args({1, 2, 4, 8, 16, 32, 64, 128, 256});
+static const usint iter         = 100;
 static const usint DCRTBITS     = MAX_MODULUS_SIZE;
-static const usint RING_DIM_LOG = 20;
-static const size_t POLY_NUM    = 16;
+static const usint RING_DIM_LOG = 18;
+static const size_t POLY_NUM    = 2;
 static const size_t POLY_NUM_M1 = (POLY_NUM - 1);
 
 static DCRTPoly makeElement(std::shared_ptr<ILDCRTParams<BigInteger>> p, Format format) {
@@ -84,7 +90,8 @@ public:
         GenerateDCRTParms(DCRTparms);
         std::cerr << "Generating polynomials for the benchmark..." << std::endl;
         GenerateDCRTPolys(DCRTparms, DCRTpolysEval, DCRTpolysCoef);
-        pim = std::make_shared<PimManager>(512);
+        pim = std::make_unique<PimManager>(256);
+        pim->Load_Binary_To_Dpus(DPU_BINARY_DCRTadd);
         std::cerr << "Polynomials for the benchmark are generated" << std::endl;
     }
 } TestParameters;
@@ -94,6 +101,25 @@ static void DCRTArguments(benchmark::internal::Benchmark* b) {
         b->ArgName("towers")->Arg(t);
     }
 }
+
+static void DCRTPIMArguments(benchmark::internal::Benchmark* b) {
+    for (usint t : tow_args) {
+        for (usint d : dpu_args) {
+            if ((t * d) != 256)
+                continue;
+            b->ArgName("towers")->Args({t, d});
+        }
+    }
+}
+
+// static void DoSetup(const benchmark::State& state) {
+//     pim = std::make_unique<PimManager>(state.range(0));
+// }
+// static void DPUArguments(benchmark::internal::Benchmark* b) {
+//     for (int i = 32; i < 488; i *= 2) {
+//         b->ArgName("allocated")->Arg(i);
+//     }
+// }
 static void DCRT_add(benchmark::State& state) {  // benchmark
     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
 
@@ -101,34 +127,164 @@ static void DCRT_add(benchmark::State& state) {  // benchmark
 
     DCRTPoly *a, *b;
     size_t i = 0;
-
+    a        = &(polys->operator[](i));
+    b        = &(polys->operator[](i + 1));
     while (state.KeepRunning()) {
-        a = &(polys->operator[](i));
-        b = &(polys->operator[](i + 1));
-        i += 2;
-        i = i & POLY_NUM_M1;
         (*a) += (*b);
     }
 }
 
-static void DCRT_add_PIM(benchmark::State& state) {  // benchmark
+BENCHMARK(DCRT_add)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments)->Iterations(iter);
+
+static void DCRT_add_PIM_WO_COPY(benchmark::State& state) {  // benchmark
     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
 
-    /*Just To keep in mind the number of to256wers is the number of m_vectors of a Specific DCRTPoly*/
+    /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
     DCRTPoly *a, *b;
     size_t i = 0;
-
-    while (state.KeepRunning()) {
-        a = &(polys->operator[](i));
-        a->SetPim(pim);
-        b = &(polys->operator[](i + 1));
-        i += 2;
-        i = i & POLY_NUM_M1;
-        (*a) += (*b);
+    a        = &(polys->operator[](i));
+    b        = &(polys->operator[](i + 1));
+    pim->Copy_Data_To_Dpus(a, *b, state.range(1));
+    for (auto _ : state) {
+        pim->Execute_On_Dpus();
     }
+    pim->Copy_Data_From_Dpus(a, state.range(1));
 }
 
-BENCHMARK(DCRT_add)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
-BENCHMARK(DCRT_add_PIM)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
+BENCHMARK(DCRT_add_PIM_WO_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTPIMArguments)->Iterations(iter);
+
+static void DCRT_add_PIM_W_COPY(benchmark::State& state) {  // benchmark
+    std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+
+    /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
+    DCRTPoly *a, *b;
+    size_t i = 0;
+    a        = &(polys->operator[](i));
+    b        = &(polys->operator[](i + 1));
+
+    for (auto _ : state) {
+        pim->Copy_Data_To_Dpus(a, *b, state.range(1));
+        pim->Execute_On_Dpus();
+        pim->Copy_Data_From_Dpus(a, state.range(1));
+    }
+}
+BENCHMARK(DCRT_add_PIM_W_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTPIMArguments)->Iterations(iter);
+
+// static void DCRT_add_PIM_Copy_to_DPUs(benchmark::State& state) {  // benchmark
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+
+//     /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
+//     DCRTPoly *a, *b;
+//     size_t i = 0;
+//     a        = &(polys->operator[](i));
+//     b        = &(polys->operator[](i + 1));
+//     for (auto _ : state) {
+//         pim->Copy_Data_To_Dpus(a, *b, state.range(1));
+//     }
+//     pim->Execute_On_Dpus();
+//     pim->Copy_Data_From_Dpus(a, state.range(1));
+// }
+
+// BENCHMARK(DCRT_add_PIM_Copy_to_DPUs)->Unit(benchmark::kMillisecond)->Apply(DCRTPIMArguments)->Iterations(iter);
+
+// static void DCRT_add_PIM_Copy_from_DPUs(benchmark::State& state) {  // benchmark
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+
+//     /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
+//     DCRTPoly *a, *b;
+//     size_t i = 0;
+//     a        = &(polys->operator[](i));
+//     b        = &(polys->operator[](i + 1));
+//     pim->Copy_Data_To_Dpus(a, *b, state.range(1));
+//     pim->Execute_On_Dpus();
+//     for (auto _ : state) {
+//         pim->Copy_Data_From_Dpus(a, state.range(1));
+//     }
+// }
+// BENCHMARK(DCRT_add_PIM_Copy_from_DPUs)->Unit(benchmark::kMillisecond)->Apply(DCRTPIMArguments)->Iterations(iter);
+
+// static void DPU_ALLOCATION(benchmark::State& state) {
+//     for (auto _ : state) {
+//         pim->Load_Binary_To_Dpus(DPU_BINARY_DCRTadd);
+//     }
+// }
+
+// static void DCRT_mul(benchmark::State& state) {
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+//     DCRTPoly *a, *b;
+//     size_t i = 0;
+//     a        = &(polys->operator[](i));
+//     b        = &(polys->operator[](i + 1));
+//     while (state.KeepRunning()) {
+//         (*a) *= (*b);
+//     }
+// }
+// BENCHMARK(DCRT_mul)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments)->Iterations(iter);
+
+// static void DCRT_mul_PIM(benchmark::State& state) {
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+//     DCRTPoly *a, *b, c;
+//     size_t i = 0;
+//     a        = &(polys->operator[](i));
+//     b        = &(polys->operator[](i + 1));
+//     while (state.KeepRunning()) {
+//         pim->Copy_Data_To_Dpus(a, *b, state.range(1));
+//         pim->Execute_On_Dpus();
+//         pim->Copy_Data_From_Dpus(a, state.range(1));
+//     }
+// }
+// BENCHMARK(DCRT_mul_PIM)->Unit(benchmark::kMillisecond)->Apply(DCRTPIMArguments)->Iterations(iter);
+
+// static void DCRT_ntt(benchmark::State& state) {
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysCoef[state.range(0)];
+//     DCRTPoly a;
+//     size_t i = 0;
+
+//     while (state.KeepRunning()) {
+//         a = polys->operator[](i);
+//         i++;
+//         i = i & POLY_NUM_M1;
+//         a.SwitchFormat();
+//     }
+// }
+
+// static void DCRT_ntt_PIM(benchmark::State& state) {
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysCoef[state.range(0)];
+//     DCRTPoly a;
+//     size_t i = 0;
+
+//     while (state.KeepRunning()) {
+//         a = polys->operator[](i);
+//         i++;
+//         i = i & POLY_NUM_M1;
+//         a.SwitchFormat();
+//     }
+// }
+
+// static void DCRT_intt(benchmark::State& state) {
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+//     DCRTPoly a;
+//     size_t i = 0;
+
+//     while (state.KeepRunning()) {
+//         a = polys->operator[](i);
+//         i++;
+//         i = i & POLY_NUM_M1;
+//         a.SwitchFormat();
+//     }
+// }
+
+// static void DCRT_intt_PIM(benchmark::State& state) {
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+//     DCRTPoly a;
+//     size_t i = 0;
+
+//     while (state.KeepRunning()) {
+//         a = polys->operator[](i);
+//         i++;
+//         i = i & POLY_NUM_M1;
+//         a.SwitchFormat();
+//     }
+// }
 
 BENCHMARK_MAIN();
