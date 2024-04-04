@@ -8,8 +8,6 @@
     However, specific hardware optimizations can be made for some operations which are specific to DPUs, i.e 
     writting some code in assemby code of the DPU.
 */
-
-
 typedef uint64_t NativeInt;
 
 struct typeD {

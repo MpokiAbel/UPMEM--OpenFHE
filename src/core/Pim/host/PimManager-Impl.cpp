@@ -68,7 +68,7 @@ public:
     //     }
     // }
 
-// This functions distributes the data into the DPUs, tries as much as possible to distribute evenly
+    // This functions distributes the data into the DPUs, tries as much as possible to distribute evenly
     template <typename Element>
     void Copy_Data_To_Dpus(lbcrypto::DCRTPolyImpl<Element>* a, const lbcrypto::DCRTPolyImpl<Element>& b,
                            unsigned dpuSplit) {
@@ -81,6 +81,7 @@ public:
         // size_t dpuNum                    = dpuSplit * m_vectorSize;
         size_t towerElementCount = mv1[0].GetValues().GetLength();
         size_t towerSplitCount   = towerElementCount / dpuSplit;
+
         vector2D buf1(GetNumDpus(), vector1D(towerSplitCount));
         vector2D buf2(GetNumDpus(), vector1D(towerSplitCount));
         vector2D mod(GetNumDpus(), vector1D(1));
@@ -113,7 +114,19 @@ public:
         system.copy(DPU_MRAM_HEAP_POINTER_NAME, data_to_copy, buf2, data_to_copy);
     }
 
-// This function copies data from the DPUs and puts them back into the corresponding objects
+    /*This function copy the values from the DPUs to a container,
+ the size of the container is basically the number of splits*/
+    void copy_from_dpu(size_t size, vector2D& results) {
+        size_t bytes = size * sizeof(uint64_t);
+        try {
+            system.copy(results, bytes, DPU_MRAM_HEAP_POINTER_NAME);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Error copying data from DPU: " << e.what() << std::endl;
+        }
+    }
+
+    // This function copies data from the DPUs and puts them back into the corresponding objects
     template <typename Element>
     void Copy_Data_From_Dpus(lbcrypto::DCRTPolyImpl<Element>* a, unsigned int dpuSplit) {
         auto& mv = a->GetAllElements();
@@ -124,13 +137,13 @@ public:
         size_t dpuNum                    = dpuSplit * m_vectorSize;
         size_t towerElementCount         = mv[0].GetValues().GetLength();
         size_t towerSplitCount           = towerElementCount / dpuNum;
-        size_t bytes                     = towerSplitCount * sizeof(uint64_t);
 
         vector2D results(GetNumDpus(), vector1D(towerSplitCount));  // Container for DPU data results
-        system.copy(results, bytes, DPU_MRAM_HEAP_POINTER_NAME);
+        copy_from_dpu(towerSplitCount, results);
 
-        // Set data on Each poly
-        // #pragma omp parallel for num_threads(lbcrypto::OpenFHEParallelControls.GetThreadLimit(m_vectorSize))
+        /*    Set data on Each poly
+             #pragma omp parallel for num_threads(lbcrypto::OpenFHEParallelControls.GetThreadLimit(m_vectorSize))
+        */
         for (size_t i = 0; i < m_vectorSize; i++) {
             for (size_t k = 0; k < towerElementCount; k++) {
                 if (elements_in_current_split >= towerSplitCount) {
@@ -153,8 +166,8 @@ public:
         return system.dpus().size();
     }
 
-// This method is only called when we dont want to measure indiviadual operations i.e sending of data etc
-// It's a wrapper that performs all the operations including sending to DPU
+    // This method is only called when we dont want to measure indiviadual operations i.e sending of data etc
+    // It's a wrapper that performs all the operations including sending to DPU
     template <typename Element>
     int Run_On_Pim(Element* a, const Element& b) {
         int ret = 0;  // Variable to hold the return value of this function, indicating success or failure
