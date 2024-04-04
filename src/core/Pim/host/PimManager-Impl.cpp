@@ -68,6 +68,7 @@ public:
     //     }
     // }
 
+// This functions distributes the data into the DPUs, tries as much as possible to distribute evenly
     template <typename Element>
     void Copy_Data_To_Dpus(lbcrypto::DCRTPolyImpl<Element>* a, const lbcrypto::DCRTPolyImpl<Element>& b,
                            unsigned dpuSplit) {
@@ -106,12 +107,13 @@ public:
         vector1D data_size_in_bytes{data_to_copy};
 
         // Move the data in parallel
-        system.copy("mram_modulus", mod);
-        system.copy("data_copied_in_bytes", data_size_in_bytes);
+        system.copy("mram_modulus", 0, mod, sizeof(uint64_t));
+        system.copy("data_copied_in_bytes", 0, data_size_in_bytes, sizeof(uint64_t));
         system.copy(DPU_MRAM_HEAP_POINTER_NAME, 0, buf1, data_to_copy);
         system.copy(DPU_MRAM_HEAP_POINTER_NAME, data_to_copy, buf2, data_to_copy);
     }
 
+// This function copies data from the DPUs and puts them back into the corresponding objects
     template <typename Element>
     void Copy_Data_From_Dpus(lbcrypto::DCRTPolyImpl<Element>* a, unsigned int dpuSplit) {
         auto& mv = a->GetAllElements();
@@ -151,6 +153,8 @@ public:
         return system.dpus().size();
     }
 
+// This method is only called when we dont want to measure indiviadual operations i.e sending of data etc
+// It's a wrapper that performs all the operations including sending to DPU
     template <typename Element>
     int Run_On_Pim(Element* a, const Element& b) {
         int ret = 0;  // Variable to hold the return value of this function, indicating success or failure

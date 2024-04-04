@@ -6,7 +6,7 @@
 #include <alloc.h>
 #include <perfcounter.h>
 #include <alloc.h>
-#include "helper-functions.h"
+#include "intnat-dpu.h"
 
 #define CACHE_SIZE (1 << 8)
 #define SIZE (CACHE_SIZE >> 3)
