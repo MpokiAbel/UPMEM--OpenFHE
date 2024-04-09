@@ -1,15 +1,4 @@
-#include <stddef.h>
-#include <stdint.h>
-#include <cstddef>
-#include <cstdint>
 #include <dpu>
-#include <iostream>
-#include <chrono>
-#include <tuple>
-#include <fstream>
-#include <string>
-#include <variant>
-#include <vector>
 
 /* 
     Custome include files 
@@ -28,10 +17,6 @@
 #endif
 
 using namespace dpu;
-
-using vector2D = std::vector<std::vector<uint64_t>>;
-using vector1D = std::vector<uint64_t>;
-using string   = std::string;
 
 // struct MyData {
 //     string name;
@@ -62,17 +47,21 @@ public:
         outFile.open("logs.txt", std::ios::app);  // Log file opened in append mode
     }
 
-    // void sendData(std::vector<MyData>& data) {
-    //     for (auto& i : data) {
-    //         system.copy(i.name, i.index, i.data, i.size);
-    //     }
-    // }
+    void Copy_Data_To_Dpus(DPUData& dpuData) {
+        size_t bytes = dpuData.data_size_in_bytes[0];
+
+        // Move the data in parallel
+        system.copy("mram_modulus", 0, dpuData.mod, sizeof(uint64_t));
+        system.copy("data_copied_in_bytes", 0, dpuData.data_size_in_bytes, sizeof(uint64_t));
+        system.copy(DPU_MRAM_HEAP_POINTER_NAME, 0, dpuData.buf1, bytes);
+        system.copy(DPU_MRAM_HEAP_POINTER_NAME, bytes, dpuData.buf2, bytes);
+    }
 
     // This functions distributes the data into the DPUs, tries as much as possible to distribute evenly
     template <typename Element>
-    void Copy_Data_To_Dpus(lbcrypto::DCRTPolyImpl<Element>* a, const lbcrypto::DCRTPolyImpl<Element>& b,
-                           unsigned dpuSplit) {
-        auto& mv1 = a->GetAllElements();
+    void Prepare_Data_For_Dpus(lbcrypto::DCRTPolyImpl<Element>& a, const lbcrypto::DCRTPolyImpl<Element>& b,
+                               DPUData& dpuData, unsigned dpuSplit) {
+        auto& mv1 = a.GetAllElements();
         auto& mv2 = b.GetAllElements();
 
         size_t m_vectorSize              = mv1.size();
@@ -81,12 +70,13 @@ public:
         // size_t dpuNum                    = dpuSplit * m_vectorSize;
         size_t towerElementCount = mv1[0].GetValues().GetLength();
         size_t towerSplitCount   = towerElementCount / dpuSplit;
+        size_t bytes             = towerSplitCount * sizeof(uint64_t);
 
-        vector2D buf1(GetNumDpus(), vector1D(towerSplitCount));
-        vector2D buf2(GetNumDpus(), vector1D(towerSplitCount));
-        vector2D mod(GetNumDpus(), vector1D(1));
+        dpuData.buf1.resize(GetNumDpus(), vector1D(towerSplitCount));
+        dpuData.buf2.resize(GetNumDpus(), vector1D(towerSplitCount));
+        dpuData.mod.resize(GetNumDpus(), vector1D(1));
+        dpuData.data_size_in_bytes = {bytes};
 
-        // #pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(m_vectorSize))
         for (size_t i = 0; i < m_vectorSize; ++i) {
             for (size_t j = 0; j < towerElementCount; ++j) {
                 if (elements_in_current_split >= towerSplitCount) {
@@ -94,29 +84,20 @@ public:
                     elements_in_current_split = 0;
                 }
 
-                buf1[current_split_index].push_back(mv1[i][j].ConvertToInt());
-                buf2[current_split_index].push_back(mv2[i][j].ConvertToInt());
+                dpuData.buf1[current_split_index].push_back(mv1[i][j].ConvertToInt());
+                dpuData.buf2[current_split_index].push_back(mv2[i][j].ConvertToInt());
                 ++elements_in_current_split;
             }
 
             for (size_t k = i * dpuSplit; k < (i * dpuSplit) + dpuSplit; k++) {
-                mod[k][0] = mv1[i].GetValues().GetModulus().ConvertToInt();
+                dpuData.mod[k][0] = mv1[i].GetValues().GetModulus().ConvertToInt();
             }
         }
-
-        size_t data_to_copy = towerSplitCount * sizeof(uint64_t);
-        vector1D data_size_in_bytes{data_to_copy};
-
-        // Move the data in parallel
-        system.copy("mram_modulus", 0, mod, sizeof(uint64_t));
-        system.copy("data_copied_in_bytes", 0, data_size_in_bytes, sizeof(uint64_t));
-        system.copy(DPU_MRAM_HEAP_POINTER_NAME, 0, buf1, data_to_copy);
-        system.copy(DPU_MRAM_HEAP_POINTER_NAME, data_to_copy, buf2, data_to_copy);
     }
 
     /*This function copy the values from the DPUs to a container,
- the size of the container is basically the number of splits*/
-    void copy_from_dpu(size_t size, vector2D& results) {
+        the size of the container is basically the number of splits*/
+    void Copy_From_Dpu(size_t size, vector2D& results) {
         size_t bytes = size * sizeof(uint64_t);
         try {
             system.copy(results, bytes, DPU_MRAM_HEAP_POINTER_NAME);
@@ -126,10 +107,12 @@ public:
         }
     }
 
-    // This function copies data from the DPUs and puts them back into the corresponding objects
+    /* 
+        This function copies data from the DPUs and puts them back into the corresponding objects
+    */
     template <typename Element>
-    void Copy_Data_From_Dpus(lbcrypto::DCRTPolyImpl<Element>* a, unsigned int dpuSplit) {
-        auto& mv = a->GetAllElements();
+    void fill_DCRTPoly(lbcrypto::DCRTPolyImpl<Element>& a, vector2D& results, unsigned int dpuSplit) {
+        auto& mv = a.GetAllElements();
 
         size_t m_vectorSize              = mv.size();
         size_t current_split_index       = 0;
@@ -137,9 +120,6 @@ public:
         size_t dpuNum                    = dpuSplit * m_vectorSize;
         size_t towerElementCount         = mv[0].GetValues().GetLength();
         size_t towerSplitCount           = towerElementCount / dpuNum;
-
-        vector2D results(GetNumDpus(), vector1D(towerSplitCount));  // Container for DPU data results
-        copy_from_dpu(towerSplitCount, results);
 
         /*    Set data on Each poly
              #pragma omp parallel for num_threads(lbcrypto::OpenFHEParallelControls.GetThreadLimit(m_vectorSize))
@@ -184,7 +164,7 @@ public:
             // // LOGv("Load_Binary takes: ", duration_ms(end - start));
 
             // // auto start = timeNow();
-            Copy_Data_To_Dpus(a, b, 1);
+            // Prepare_Data_For_Dpus(*a, b, 1);
             // // auto end = timeNow();
             // // LOGv("Copy data to DPUs takes: ", duration_ms(end - start));
 
@@ -197,7 +177,7 @@ public:
             // system.log(outFile);
 
             // // start = timeNow();
-            Copy_Data_From_Dpus(a, 1);
+            // fill_DCRTPoly(*a, 1);
             // end = timeNow();
             // LOGv("Copy data from DPUs takes: ", duration_ms(end - start));
 
@@ -231,17 +211,25 @@ void PimManager::Load_Binary_To_Dpus(const std::string& binary) {
 }
 
 template <typename Element>
-void PimManager::Copy_Data_To_Dpus(Element* a, const Element& b, unsigned split) {
-    PmImpl->Copy_Data_To_Dpus(a, b, split);
+void PimManager::Prepare_Data_For_Dpus(Element& a, const Element& b, DPUData& dpuData, unsigned split) {
+    PmImpl->Prepare_Data_For_Dpus(a, b, dpuData, split);
 }
 
 void PimManager::Execute_On_Dpus() {
     PmImpl->Execute_On_Dpus();
 }
 
+void PimManager::Copy_From_Dpus(size_t size, vector2D& results) {
+    PmImpl->Copy_From_Dpu(size, results);
+}
+
+void PimManager::Copy_Data_To_Dpus(DPUData& dpuData) {
+    PmImpl->Copy_Data_To_Dpus(dpuData);
+}
+
 template <typename Element>
-void PimManager::Copy_Data_From_Dpus(Element* a, unsigned split) {
-    PmImpl->Copy_Data_From_Dpus(a, split);
+void PimManager::fill_DCRTPoly(Element& a, vector2D& results, unsigned split) {
+    PmImpl->fill_DCRTPoly(a, results, split);
 }
 
 size_t PimManager::GetNumDpus() {
@@ -258,10 +246,11 @@ template int PimManager::Run_On_Pim<lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<
     lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>> const& b);
 
 template void
-PimManager::Copy_Data_To_Dpus<lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>>(
-    lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>* a,
-    lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>> const& b, unsigned split);
+PimManager::Prepare_Data_For_Dpus<lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>>(
+    lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>& a,
+    lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>> const& b, DPUData& dpuData,
+    unsigned split);
 
-template void
-PimManager::Copy_Data_From_Dpus<lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>>(
-    lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>* a, unsigned split);
+template void PimManager::fill_DCRTPoly<lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>>(
+    lbcrypto::DCRTPolyImpl<bigintdyn::mubintvec<bigintdyn::ubint<unsigned long>>>& a, vector2D& results,
+    unsigned split);

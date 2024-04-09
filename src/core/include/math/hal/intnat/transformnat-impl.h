@@ -526,7 +526,7 @@ void NumberTheoreticTransformNat<VecType>::InverseTransformFromBitReverseInPlace
         for (uint32_t i{0}; i < m; ++i) {
             auto omega{rootOfUnityInverseTable[i + m]};
             auto preconOmega{preconRootOfUnityInverseTable[i + m]};
-            for (uint32_t j1{i << logt},  j2{j1 + t}; j1 < j2; ++j1) {
+            for (uint32_t j1{i << logt}, j2{j1 + t}; j1 < j2; ++j1) {
                 auto hiVal{(*element)[j1 + t]};
                 auto loVal{(*element)[j1 + 0]};
 #if defined(__GNUC__) && !defined(__clang__)
@@ -575,6 +575,8 @@ template <typename VecType>
 void ChineseRemainderTransformFTTNat<VecType>::ForwardTransformToBitReverseInPlace(const IntType& rootOfUnity,
                                                                                    const usint CycloOrder,
                                                                                    VecType* element) {
+    std::cout << "ForwardTransformToBitReverseInPlace" << std::endl;
+
     if (rootOfUnity == IntType(1) || rootOfUnity == IntType(0)) {
         return;
     }
@@ -635,6 +637,7 @@ template <typename VecType>
 void ChineseRemainderTransformFTTNat<VecType>::InverseTransformFromBitReverseInPlace(const IntType& rootOfUnity,
                                                                                      const usint CycloOrder,
                                                                                      VecType* element) {
+    std::cout << "InverseTransformFromBitReverseInPlace" << std::endl;
     if (rootOfUnity == IntType(1) || rootOfUnity == IntType(0)) {
         return;
     }
