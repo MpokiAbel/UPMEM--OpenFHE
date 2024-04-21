@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <cstdint>
 
 /*
     This file tries to put the same computations as the one being executed on openFHE- just for fair comparison
@@ -23,13 +24,6 @@ static void ModAddFastEq(NativeInt* m_value, NativeInt b_m_value, NativeInt modu
 
     if (*m_value >= modulus_m_values)
         *m_value -= modulus_m_values;
-}
-
-// Performing the ModAddEq operation make sure to cast the operations to 64 bits operations
-static void ModAddEq(NativeInt* m_value, NativeInt* b_m_value, NativeInt modulus_m_values, size_t size) {
-    for (size_t i = 0; i < size; i++) {
-        ModAddFastEq(m_value + i, *(b_m_value + i), modulus_m_values);
-    }
 }
 
 /* Functions associated with the polynomial modular element-wise multiplications */
@@ -83,9 +77,16 @@ NativeInt ComputeMu(NativeInt m_value) {
     if (m_value == 0) {
         return 0;
     }
+    int64_t msb = GetMSB(m_value);
+    /*I changed the original code to accomodate the shifts operations for divisions and multiplication*/
+    NativeInt tmp = 1 << (msb << 1 | 3);
 
-    NativeInt tmp = 1 << (2 * GetMSB(m_value) + 3);
-    return tmp / m_value;
+    if ((m_value & (m_value - 1)) == 0) {
+        return tmp >> msb;  // Equivalent to tmp / m_value
+    }
+    else {
+        return tmp / m_value;  // Use regular division
+    }
 }
 
 /* Here the DNative is the same as native However we would need to simulate the 128 bit operation*/
@@ -102,13 +103,6 @@ static void ModMulFastEq(NativeInt* m_value, NativeInt b_value, NativeInt modulu
         *m_value -= modulus_value;
 }
 
-static void ModMulNoCheckEq(NativeInt* m_value, NativeInt* b_m_value, NativeInt modulus_m_values, NativeInt mu_value,
-                            size_t size) {
-    // NativeInt mu{m_modulus.ComputeMu()};
-    for (size_t i = 0; i < size; ++i)
-        ModMulFastEq(m_value + i, *(b_m_value + i), modulus_m_values, mu_value);
-}
-
 /* Functions and operations associated with the NTT implementations */
 static NativeInt MultDHi(NativeInt a, NativeInt b) {
     struct typeD x;
@@ -120,109 +114,4 @@ void ModMulFastConstEq(NativeInt* m_value, NativeInt b_m_value, NativeInt modulu
     NativeInt q            = MultDHi(*m_value, bInv_mvalue) + 1;
     SignedNativeInt yprime = (SignedNativeInt)((*m_value) * b_m_value - q * modulus_m_value);
     (*m_value)             = (NativeInt)(yprime >= 0 ? yprime : yprime + modulus_m_value);
-}
-
-void NTTForwardTransformToBitReverseInPlace(NativeInt* rootOfUnityTable, NativeInt* preconRootOfUnityTable,
-                                            NativeInt* element, NativeInt modulus, uint32_t length) {
-    uint32_t n = length >> 1, t = n, logt = GetMSB(t);
-    for (uint32_t m = 1; m < n; m <<= 1, t >>= 1, --logt) {
-        for (uint32_t i = 0; i < m; ++i) {
-            NativeInt omega       = rootOfUnityTable[i + m];
-            NativeInt preconOmega = preconRootOfUnityTable[i + m];
-            for (uint32_t j1 = i << logt, j2 = j1 + t; j1 < j2; ++j1) {
-                NativeInt omegaFactor = element[j1 + t];
-                ModMulFastConstEq(&omegaFactor, omega, modulus, preconOmega);
-                NativeInt loVal = element[j1 + 0];
-#if defined(__GNUC__) && !defined(__clang__)
-                NativeInt hiVal = loVal + omegaFactor;
-                if (hiVal >= modulus)
-                    hiVal -= modulus;
-                if (loVal < omegaFactor)
-                    loVal += modulus;
-                loVal -= omegaFactor;
-                element[j1 + 0] = hiVal;
-                element[j1 + t] = loVal;
-#else
-                // fixes Clang slowdown issue, but requires lowVal be less than modulus
-                element[j1 + 0] += omegaFactor - (omegaFactor >= (modulus - loVal) ? modulus : 0);
-                if (omegaFactor > loVal)
-                    loVal += modulus;
-                element[j1 + t] = loVal - omegaFactor;
-#endif
-            }
-        }
-    }
-    for (uint32_t i = 0; i < (n << 1); i += 2) {
-        NativeInt omegaFactor = element[i + 1];
-        NativeInt omega       = rootOfUnityTable[(i >> 1) + n];
-        NativeInt preconOmega = preconRootOfUnityTable[(i >> 1) + n];
-        ModMulFastConstEq(&omegaFactor, omega, modulus, preconOmega);
-        NativeInt loVal = element[i + 0];
-#if defined(__GNUC__) && !defined(__clang__)
-        NativeInt hiVal = loVal + omegaFactor;
-        if (hiVal >= modulus)
-            hiVal -= modulus;
-        if (loVal < omegaFactor)
-            loVal += modulus;
-        loVal -= omegaFactor;
-        element[i + 0] = hiVal;
-        element[i + 1] = loVal;
-#else
-        element[i + 0] += omegaFactor - (omegaFactor >= (modulus - loVal) ? modulus : 0);
-        if (omegaFactor > loVal)
-            loVal += modulus;
-        element[i + t] = loVal - omegaFactor;
-#endif
-    }
-}
-
-void NTTInverseTransformFromBitReverseInPlace(NativeInt* rootOfUnityInverseTable, NativeInt cycloOrderInv,
-                                              NativeInt* element, NativeInt modulus, uint32_t length) {
-    uint32_t n   = length;
-    NativeInt mu = ComputeMu(modulus);
-
-    NativeInt loVal, hiVal, omega, omegaFactor;
-    uint8_t i, m, j1, j2, indexOmega, indexLo, indexHi;
-
-    uint8_t t     = 1;
-    uint8_t logt1 = 1;
-    for (m = (n >> 1); m >= 1; m >>= 1) {
-        for (i = 0; i < m; ++i) {
-            j1         = i << logt1;
-            j2         = j1 + t;
-            indexOmega = m + i;
-            omega      = rootOfUnityInverseTable[indexOmega];
-
-            for (indexLo = j1; indexLo < j2; ++indexLo) {
-                indexHi = indexLo + t;
-
-                hiVal = element[indexHi];
-                loVal = element[indexLo];
-
-                omegaFactor = loVal;
-                if (omegaFactor < hiVal) {
-                    omegaFactor += modulus;
-                }
-
-                omegaFactor -= hiVal;
-
-                loVal += hiVal;
-                if (loVal >= modulus) {
-                    loVal -= modulus;
-                }
-
-                ModMulFastEq(&omegaFactor, omega, modulus, mu);
-
-                element[indexLo] = loVal;
-                element[indexHi] = omegaFactor;
-            }
-        }
-        t <<= 1;
-        logt1++;
-    }
-
-    for (i = 0; i < n; i++) {
-        ModMulFastEq(element + i, cycloOrderInv, modulus, mu);
-    }
-    return;
 }

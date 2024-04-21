@@ -415,7 +415,7 @@ DCRTPolyImpl<VecType>& DCRTPolyImpl<VecType>::operator+=(const DCRTPolyImpl& rhs
     //     }
     // }
     // else {
-// #pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(size))
+#pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(size))
     for (size_t i = 0; i < size; ++i)
         m_vectors[i] += rhs.m_vectors[i];
     // }

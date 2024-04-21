@@ -12,14 +12,13 @@
 
 #include "benchmark/benchmark.h"
 
-#define DPU_BINARY_DCRTadd "/home/pim/MPOKI/UPMEM-OpenFHE/build/src/core/Pim/dpu/mubintvecnatadd_dpu"
-#define DPU_BINARY_DCRTmul "/home/pim/MPOKI/UPMEM-OpenFHE/build/src/core/Pim/dpu/mubintvecnatmul_dpu"
+#define DPU_BINARY_DCRTadd "./src/core/Pim/dpu/mubintvecnatadd_dpu"
+#define DPU_BINARY_DCRTmul "./src/core/Pim/dpu/mubintvecnatmul_dpu"
 
 using namespace lbcrypto;
 
 // static std::vector<usint> tow_args({1, 2, 4, 8, 16, 32});
-static std::vector<usint> tow_args({1});
-static std::vector<usint> dpu_args({1, 2, 4, 8, 16, 32, 64, 128, 256});
+static std::vector<usint> tow_args({2, 16});
 static const usint dpuNo        = 256;
 static const usint iter         = 100;
 static const usint DCRTBITS     = MAX_MODULUS_SIZE;
@@ -102,16 +101,6 @@ static void DCRTArguments(benchmark::internal::Benchmark* b) {
     }
 }
 
-static void DCRTPIMArguments(benchmark::internal::Benchmark* b) {
-    for (usint t : tow_args) {
-        for (usint d : dpu_args) {
-            if ((t * d) != dpuNo)
-                continue;
-            b->ArgName("towers")->Args({t, d});
-        }
-    }
-}
-
 static void DCRT_add(benchmark::State& state) {  // benchmark
     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
 
@@ -132,90 +121,61 @@ static void DCRT_add_PIM_WO_COPY(benchmark::State& state) {  // benchmark
     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
 
     /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
-    pim->Load_Binary_To_Dpus(DPU_BINARY_DCRTadd);
+    pim->load_binary(DPU_BINARY_DCRTadd);
 
     DCRTPoly *a, *b;
     size_t i = 0;
     a        = &(polys->operator[](i));
     b        = &(polys->operator[](i + 1));
 
-    size_t dpuNum            = state.range(1) * a->GetAllElements().size();
-    size_t towerElementCount = a->GetAllElements()[0].GetValues().GetLength();
-    size_t towerSplitCount   = towerElementCount / dpuNum;
-
-    vector2D result(pim->GetNumDpus(), vector1D(towerSplitCount));
-    DPUData dataDPU;
-
-    pim->Prepare_Data_For_Dpus(*a, *b, dataDPU, state.range(1));
-    pim->Copy_Data_To_Dpus(dataDPU);
-
-    for (auto _ : state) {
-        pim->Execute_On_Dpus();
+    pim->copy_to_dpu(*a, *b);
+    while (state.KeepRunning()) {
+        pim->execute();
     }
-
-    pim->Copy_From_Dpus(towerSplitCount, result);
-    pim->fill_DCRTPoly(*a, result, state.range(1));
+    pim->copy_from_dpu(*a);
 }
 
-BENCHMARK(DCRT_add_PIM_WO_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTPIMArguments);
+BENCHMARK(DCRT_add_PIM_WO_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
 static void DCRT_add_PIM_W_COPY(benchmark::State& state) {  // benchmark
     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
 
     /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
-    pim->Load_Binary_To_Dpus(DPU_BINARY_DCRTadd);
+    pim->load_binary(DPU_BINARY_DCRTadd);
     DCRTPoly *a, *b;
     size_t i = 0;
     a        = &(polys->operator[](i));
     b        = &(polys->operator[](i + 1));
 
-    size_t dpuNum            = state.range(1) * a->GetAllElements().size();
-    size_t towerElementCount = a->GetAllElements()[0].GetValues().GetLength();
-    size_t towerSplitCount   = towerElementCount / dpuNum;
-
-    vector2D result(pim->GetNumDpus(), vector1D(towerSplitCount));
-    DPUData dataDPU;
-    pim->Prepare_Data_For_Dpus(*a, *b, dataDPU, state.range(1));
-
-    for (auto _ : state) {
-        pim->Copy_Data_To_Dpus(dataDPU);
-        pim->Execute_On_Dpus();
-        pim->Copy_From_Dpus(towerSplitCount, result);
+    while (state.KeepRunning()) {
+        pim->copy_to_dpu(*a, *b);
+        pim->execute();
+        pim->copy_from_dpu(*a);
     }
-    pim->fill_DCRTPoly(*a, result, state.range(1));
 }
-BENCHMARK(DCRT_add_PIM_W_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTPIMArguments);
+BENCHMARK(DCRT_add_PIM_W_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
 static void DCRT_add_PIM_Copy_to_DPUs(benchmark::State& state) {  // benchmark
     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
-    pim->Load_Binary_To_Dpus(DPU_BINARY_DCRTadd);
+    pim->load_binary(DPU_BINARY_DCRTadd);
 
     /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
     DCRTPoly *a, *b;
     a = &(polys->operator[](0));
     b = &(polys->operator[](1));
 
-    size_t dpuNum            = state.range(1) * a->GetAllElements().size();
-    size_t towerElementCount = a->GetAllElements()[0].GetValues().GetLength();
-    size_t towerSplitCount   = towerElementCount / dpuNum;
-
-    vector2D result(pim->GetNumDpus(), vector1D(towerSplitCount));
-    DPUData dpuData;
-    pim->Prepare_Data_For_Dpus(*a, *b, dpuData, state.range(1));
-
-    for (auto _ : state) {
-        pim->Copy_Data_To_Dpus(dpuData);
+    while (state.KeepRunning()) {
+        pim->copy_to_dpu(*a, *b);
     }
-    pim->Execute_On_Dpus();
-    pim->Copy_From_Dpus(towerSplitCount, result);
-    pim->fill_DCRTPoly(*a, result, state.range(1));
+    pim->execute();
+    pim->copy_from_dpu(*a);
 }
 
-BENCHMARK(DCRT_add_PIM_Copy_to_DPUs)->Unit(benchmark::kMillisecond)->Apply(DCRTPIMArguments);
+BENCHMARK(DCRT_add_PIM_Copy_to_DPUs)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
-static void DCRT_add_PIM_Copy_from_DPUs(benchmark::State& state) {  // benchmark
+static void DCRT_add_PIM_copy_from_dpus(benchmark::State& state) {  // benchmark
     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
-    pim->Load_Binary_To_Dpus(DPU_BINARY_DCRTadd);
+    pim->load_binary(DPU_BINARY_DCRTadd);
 
     /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
     DCRTPoly *a, *b;
@@ -223,33 +183,18 @@ static void DCRT_add_PIM_Copy_from_DPUs(benchmark::State& state) {  // benchmark
     a        = &(polys->operator[](i));
     b        = &(polys->operator[](i + 1));
 
-    size_t dpuNum            = state.range(1) * a->GetAllElements().size();
-    size_t towerElementCount = a->GetAllElements()[0].GetValues().GetLength();
-    size_t towerSplitCount   = towerElementCount / dpuNum;
+    pim->copy_to_dpu(*a, *b);
+    pim->execute();
 
-    vector2D result(pim->GetNumDpus(), vector1D(towerSplitCount));
-    DPUData dpuData;
-    pim->Prepare_Data_For_Dpus(*a, *b, dpuData, state.range(1));
-    pim->Copy_Data_To_Dpus(dpuData);
-
-    pim->Execute_On_Dpus();
-    pim->Copy_From_Dpus(towerSplitCount, result);
-
-    for (auto _ : state) {
-        pim->fill_DCRTPoly(*a, result, state.range(1));
+    while (state.KeepRunning()) {
+        pim->copy_from_dpu(*a);
     }
 }
-BENCHMARK(DCRT_add_PIM_Copy_from_DPUs)->Unit(benchmark::kMillisecond)->Apply(DCRTPIMArguments);
-
-// static void DPU_ALLOCATION(benchmark::State& state) {
-//     for (auto _ : state) {
-//         pim->Load_Binary_To_Dpus(DPU_BINARY_DCRTadd);
-//     }
-// }
+BENCHMARK(DCRT_add_PIM_copy_from_dpus)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
 static void DCRT_mul(benchmark::State& state) {
     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
-    pim->Load_Binary_To_Dpus(DPU_BINARY_DCRTmul);
+    pim->load_binary(DPU_BINARY_DCRTmul);
 
     DCRTPoly *a, *b;
     size_t i = 0;
@@ -263,57 +208,38 @@ BENCHMARK(DCRT_mul)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
 static void DCRT_mul_PIM_WO_COPY(benchmark::State& state) {
     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
-    pim->Load_Binary_To_Dpus(DPU_BINARY_DCRTmul);
+    pim->load_binary(DPU_BINARY_DCRTmul);
 
     DCRTPoly *a, *b;
     size_t i = 0;
     a        = &(polys->operator[](i));
     b        = &(polys->operator[](i + 1));
 
-    size_t dpuNum            = state.range(1) * a->GetAllElements().size();
-    size_t towerElementCount = a->GetAllElements()[0].GetValues().GetLength();
-    size_t towerSplitCount   = towerElementCount / dpuNum;
-
-    vector2D result(pim->GetNumDpus(), vector1D(towerSplitCount));
-    DPUData dpuData;
-    pim->Prepare_Data_For_Dpus(*a, *b, dpuData, state.range(1));
-    pim->Copy_Data_To_Dpus(dpuData);
+    pim->copy_to_dpu(*a, *b);
 
     while (state.KeepRunning()) {
-        pim->Execute_On_Dpus();
+        pim->execute();
     }
-
-    pim->Copy_From_Dpus(towerSplitCount, result);
-    pim->fill_DCRTPoly(*a, result, state.range(1));
+    pim->copy_from_dpu(*a);
 }
-BENCHMARK(DCRT_mul_PIM_WO_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTPIMArguments);
+BENCHMARK(DCRT_mul_PIM_WO_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
 static void DCRT_mul_PIM_W_COPY(benchmark::State& state) {
     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
-    pim->Load_Binary_To_Dpus(DPU_BINARY_DCRTmul);
+    pim->load_binary(DPU_BINARY_DCRTmul);
 
     DCRTPoly *a, *b;
     size_t i = 0;
     a        = &(polys->operator[](i));
     b        = &(polys->operator[](i + 1));
 
-    size_t dpuNum            = state.range(1) * a->GetAllElements().size();
-    size_t towerElementCount = a->GetAllElements()[0].GetValues().GetLength();
-    size_t towerSplitCount   = towerElementCount / dpuNum;
-
-    vector2D result(pim->GetNumDpus(), vector1D(towerSplitCount));
-    DPUData dpuData;
-    pim->Prepare_Data_For_Dpus(*a, *b, dpuData, state.range(1));
-
     while (state.KeepRunning()) {
-        pim->Copy_Data_To_Dpus(dpuData);
-        pim->Execute_On_Dpus();
-        pim->Copy_From_Dpus(towerSplitCount, result);
+        pim->copy_to_dpu(*a, *b);
+        pim->execute();
+        pim->copy_from_dpu(*a);
     }
-
-    pim->fill_DCRTPoly(*a, result, state.range(1));
 }
-BENCHMARK(DCRT_mul_PIM_W_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTPIMArguments);
+BENCHMARK(DCRT_mul_PIM_W_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
 // static void DCRT_ntt(benchmark::State& state) {
 //     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysCoef[state.range(0)];

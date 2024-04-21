@@ -14,9 +14,12 @@
 #include <stdint.h>
 #include <cstdint>
 
-using vector2D = std::vector<std::vector<uint64_t>>;
-using vector1D = std::vector<uint64_t>;
-using string   = std::string;
+using vector2D      = std::vector<std::vector<uint64_t>>;
+using vector1D      = std::vector<uint64_t>;
+using wrapperVector = std::vector<std::reference_wrapper<uint64_t>>;
+using resultVector  = std::vector<wrapperVector>;
+
+using string = std::string;
 
 struct DPUData {
     vector2D buf1;
@@ -31,19 +34,19 @@ public:
     PimManager(uint32_t num_dpus, const std::string& profile = "");
     ~PimManager();
 
-    void Load_Binary_To_Dpus(const std::string& binary);
-    size_t GetNumDpus();
+    void load_binary(const std::string& binary);
+    size_t get_dpu_count();
 
     template <typename Element>
-    void Prepare_Data_For_Dpus(Element& a, const Element& b, DPUData& dpuData, unsigned split = 1);
-    void Copy_Data_To_Dpus(DPUData& dpuData);
-    void Execute_On_Dpus();
-    void Copy_From_Dpus(size_t size, vector2D& results);
+    void copy_to_dpu(Element& a, const Element& b);
+    // void copy_data_to_dpu(DPUData& dpuData);
+    void execute();
+    // void copy_from_dpus(size_t size, resultVector& results);
     template <typename Element>
-    void fill_DCRTPoly(Element& a, vector2D& results, unsigned split = 1);
+    void copy_from_dpu(Element& a);
 
     template <typename Element>
-    int Run_On_Pim(Element* a, const Element& b);
+    int run_on_pim(Element* a, const Element& b);
 
 private:
     class PimManagerImpl;    // Forward declaration of the implementation class

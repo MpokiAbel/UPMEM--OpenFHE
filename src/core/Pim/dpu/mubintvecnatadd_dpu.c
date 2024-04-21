@@ -6,12 +6,12 @@
 #include <alloc.h>
 #include <perfcounter.h>
 #include <alloc.h>
-#include "intnat-dpu.h"
+#include "mubintvecnat-dpu.h"
 
 #define CACHE_SIZE (1 << 8)
 #define SIZE (CACHE_SIZE >> 3)
 
-__host uint64_t mram_modulus;
+__host NativeInt mram_modulus;
 __host uint64_t data_copied_in_bytes;
 
 int main() {
