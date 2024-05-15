@@ -169,7 +169,7 @@ int main() {
     // Step 3: Encoding and encryption of inputs
 
     // Inputs
-    std::vector<double> x1 = {0.25, 0.5, 0.75, 1.0, 2.0, 3.0, 4.0, 5.0};
+    std::vector<double> x1 = {-0.25, 0.5, 0.75, 1.0, 2.0, 3.0, 4.0, 5.0};
     std::vector<double> x2 = {5.0, 4.0, 3.0, 2.0, 1.0, 0.75, 0.5, 0.25};
 
     // Encoding as plaintexts

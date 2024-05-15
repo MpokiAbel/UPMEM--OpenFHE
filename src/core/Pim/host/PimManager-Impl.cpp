@@ -4,8 +4,6 @@
 #include "Pim/PimManager.h"
 #include "utils/debug.h"
 #include "lattice/lat-hal.h"
-// #include <dpu>
-
 extern "C" {
 #include <assert.h>
 #include <dpu.h>

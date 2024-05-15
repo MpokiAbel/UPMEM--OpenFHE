@@ -101,59 +101,59 @@ static void DCRTArguments(benchmark::internal::Benchmark* b) {
     }
 }
 
-static void DCRT_add(benchmark::State& state) {  // benchmark
-    std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+// static void DCRT_add(benchmark::State& state) {  // benchmark
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
 
-    /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
+//     /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
 
-    DCRTPoly *a, *b;
-    size_t i = 0;
-    a        = &(polys->operator[](i));
-    b        = &(polys->operator[](i + 1));
-    while (state.KeepRunning()) {
-        (*a) += (*b);
-    }
-}
+//     DCRTPoly *a, *b;
+//     size_t i = 0;
+//     a        = &(polys->operator[](i));
+//     b        = &(polys->operator[](i + 1));
+//     while (state.KeepRunning()) {
+//         (*a) += (*b);
+//     }
+// }
 
-BENCHMARK(DCRT_add)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
+// BENCHMARK(DCRT_add)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
-static void DCRT_add_PIM_WO_COPY(benchmark::State& state) {  // benchmark
-    std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+// static void DCRT_add_PIM_WO_COPY(benchmark::State& state) {  // benchmark
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
 
-    /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
-    pim->load_binary(DPU_BINARY_DCRTadd);
+//     /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
+//     pim->load_binary(DPU_BINARY_DCRTadd);
 
-    DCRTPoly *a, *b;
-    size_t i = 0;
-    a        = &(polys->operator[](i));
-    b        = &(polys->operator[](i + 1));
+//     DCRTPoly *a, *b;
+//     size_t i = 0;
+//     a        = &(polys->operator[](i));
+//     b        = &(polys->operator[](i + 1));
 
-    pim->copy_to_dpu(*a, *b);
-    while (state.KeepRunning()) {
-        pim->execute();
-    }
-    pim->copy_from_dpu(*a);
-}
+//     pim->copy_to_dpu(*a, *b);
+//     while (state.KeepRunning()) {
+//         pim->execute();
+//     }
+//     pim->copy_from_dpu(*a);
+// }
 
-BENCHMARK(DCRT_add_PIM_WO_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
+// BENCHMARK(DCRT_add_PIM_WO_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
-static void DCRT_add_PIM_W_COPY(benchmark::State& state) {  // benchmark
-    std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+// static void DCRT_add_PIM_W_COPY(benchmark::State& state) {  // benchmark
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
 
-    /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
-    pim->load_binary(DPU_BINARY_DCRTadd);
-    DCRTPoly *a, *b;
-    size_t i = 0;
-    a        = &(polys->operator[](i));
-    b        = &(polys->operator[](i + 1));
+//     /*Just To keep in mind the number of towers is the number of m_vectors of a Specific DCRTPoly*/
+//     pim->load_binary(DPU_BINARY_DCRTadd);
+//     DCRTPoly *a, *b;
+//     size_t i = 0;
+//     a        = &(polys->operator[](i));
+//     b        = &(polys->operator[](i + 1));
 
-    while (state.KeepRunning()) {
-        pim->copy_to_dpu(*a, *b);
-        pim->execute();
-        pim->copy_from_dpu(*a);
-    }
-}
-BENCHMARK(DCRT_add_PIM_W_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
+//     while (state.KeepRunning()) {
+//         pim->copy_to_dpu(*a, *b);
+//         pim->execute();
+//         pim->copy_from_dpu(*a);
+//     }
+// }
+// BENCHMARK(DCRT_add_PIM_W_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
 static void DCRT_add_PIM_Copy_to_DPUs(benchmark::State& state) {  // benchmark
     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
@@ -192,54 +192,54 @@ static void DCRT_add_PIM_copy_from_dpus(benchmark::State& state) {  // benchmark
 }
 BENCHMARK(DCRT_add_PIM_copy_from_dpus)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
-static void DCRT_mul(benchmark::State& state) {
-    std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
-    pim->load_binary(DPU_BINARY_DCRTmul);
+// static void DCRT_mul(benchmark::State& state) {
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+//     pim->load_binary(DPU_BINARY_DCRTmul);
 
-    DCRTPoly *a, *b;
-    size_t i = 0;
-    a        = &(polys->operator[](i));
-    b        = &(polys->operator[](i + 1));
-    while (state.KeepRunning()) {
-        (*a) *= (*b);
-    }
-}
-BENCHMARK(DCRT_mul)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
+//     DCRTPoly *a, *b;
+//     size_t i = 0;
+//     a        = &(polys->operator[](i));
+//     b        = &(polys->operator[](i + 1));
+//     while (state.KeepRunning()) {
+//         (*a) *= (*b);
+//     }
+// }
+// BENCHMARK(DCRT_mul)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
-static void DCRT_mul_PIM_WO_COPY(benchmark::State& state) {
-    std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
-    pim->load_binary(DPU_BINARY_DCRTmul);
+// static void DCRT_mul_PIM_WO_COPY(benchmark::State& state) {
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+//     pim->load_binary(DPU_BINARY_DCRTmul);
 
-    DCRTPoly *a, *b;
-    size_t i = 0;
-    a        = &(polys->operator[](i));
-    b        = &(polys->operator[](i + 1));
+//     DCRTPoly *a, *b;
+//     size_t i = 0;
+//     a        = &(polys->operator[](i));
+//     b        = &(polys->operator[](i + 1));
 
-    pim->copy_to_dpu(*a, *b);
+//     pim->copy_to_dpu(*a, *b);
 
-    while (state.KeepRunning()) {
-        pim->execute();
-    }
-    pim->copy_from_dpu(*a);
-}
-BENCHMARK(DCRT_mul_PIM_WO_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
+//     while (state.KeepRunning()) {
+//         pim->execute();
+//     }
+//     pim->copy_from_dpu(*a);
+// }
+// BENCHMARK(DCRT_mul_PIM_WO_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
-static void DCRT_mul_PIM_W_COPY(benchmark::State& state) {
-    std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
-    pim->load_binary(DPU_BINARY_DCRTmul);
+// static void DCRT_mul_PIM_W_COPY(benchmark::State& state) {
+//     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysEval[state.range(0)];
+//     pim->load_binary(DPU_BINARY_DCRTmul);
 
-    DCRTPoly *a, *b;
-    size_t i = 0;
-    a        = &(polys->operator[](i));
-    b        = &(polys->operator[](i + 1));
+//     DCRTPoly *a, *b;
+//     size_t i = 0;
+//     a        = &(polys->operator[](i));
+//     b        = &(polys->operator[](i + 1));
 
-    while (state.KeepRunning()) {
-        pim->copy_to_dpu(*a, *b);
-        pim->execute();
-        pim->copy_from_dpu(*a);
-    }
-}
-BENCHMARK(DCRT_mul_PIM_W_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
+//     while (state.KeepRunning()) {
+//         pim->copy_to_dpu(*a, *b);
+//         pim->execute();
+//         pim->copy_from_dpu(*a);
+//     }
+// }
+// BENCHMARK(DCRT_mul_PIM_W_COPY)->Unit(benchmark::kMillisecond)->Apply(DCRTArguments);
 
 // static void DCRT_ntt(benchmark::State& state) {
 //     std::shared_ptr<std::vector<DCRTPoly>> polys = DCRTpolysCoef[state.range(0)];

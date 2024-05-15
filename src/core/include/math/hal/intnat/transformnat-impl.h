@@ -575,7 +575,7 @@ template <typename VecType>
 void ChineseRemainderTransformFTTNat<VecType>::ForwardTransformToBitReverseInPlace(const IntType& rootOfUnity,
                                                                                    const usint CycloOrder,
                                                                                    VecType* element) {
-    std::cout << "ForwardTransformToBitReverseInPlace" << std::endl;
+    // std::cout << "ForwardTransformToBitReverseInPlace" << std::endl;
 
     if (rootOfUnity == IntType(1) || rootOfUnity == IntType(0)) {
         return;
@@ -637,7 +637,7 @@ template <typename VecType>
 void ChineseRemainderTransformFTTNat<VecType>::InverseTransformFromBitReverseInPlace(const IntType& rootOfUnity,
                                                                                      const usint CycloOrder,
                                                                                      VecType* element) {
-    std::cout << "InverseTransformFromBitReverseInPlace" << std::endl;
+    // std::cout << "InverseTransformFromBitReverseInPlace" << std::endl;
     if (rootOfUnity == IntType(1) || rootOfUnity == IntType(0)) {
         return;
     }
