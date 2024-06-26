@@ -31,9 +31,9 @@ You can manually reconfigure and recompile the following variables to your needs
 Currently for purpose ofexperimentaion we have not implemented a full back-end based on PIM therefore we just intecept certain HE operations and offload to PIM. A much better approach is to have PIM as one of the backends of openFHE and re-implement a full HAL layer with PIM similar to [intel-hexl](https://github.com/intel/hexl)
 
 
-Most of the Pim-based implementations are in a folder `/src/core/pim` and `/src/include/pim`. The host folder contains code for the host CPU and the DPU folder represents the DPU kernels.
+Most of the Pim-based implementations are in a folder `/src/core/pim` and `/src/core/include/pim`. The host folder contains code for the host CPU and the DPU folder represents the DPU kernels.
 
-## Rules on adding dpu kernels
+### Rules on adding dpu kernels
 
 1. Make sure the program is placed in the folder /src/core/pim/dpu
 2. The dpu program name should end with an extension *_dpu.c example add_dpu.c
