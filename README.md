@@ -37,5 +37,5 @@ The majority of PIM-based implementations reside in the folders `/src/core/pim` 
 
 ### Rules on adding dpu kernels
 
-1. Ensure the program is located in the directory /src/core/pim/dpu
-2. The program for dpu should be named with the extension *_dpu.c, for instance add_dpu.c
+1. Ensure the program is located in the directory `/src/core/pim/dpu`
+2. The program for dpu should be named with the extension `*_dpu.c`, for instance `add_dpu.c`
