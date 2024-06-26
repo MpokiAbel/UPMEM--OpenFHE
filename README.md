@@ -15,16 +15,19 @@ make build_dpu_programs
 ```
 
 To run the benchmark for the polynomial additions and multiplication after build.
-run : ./bin/benchmark/upmem-poly-benchmark.
 
+Run : 
+```
+./bin/benchmark/upmem-poly-benchmark.
+```
 The benchmark has some precofigure polynomial parameter for polynomial generations using the openFHE APIs
 
 You can manually reconfigure and recompile the following variables to your needs:
 
-`tow_args`: represents the number of towers for each generated polynomial default 2, 4 and 8
-`dpuNo` : represents the number of DPUs , the default value is 256: make sure the number of DPUs to be logn where log is to base 2;
-`RING_DIM_LOG`: represents the ring dimension of the polynomial the default size is 14;
-`POLY_NUM`: represents the number of polynomials needed for each setting above: usually the ciphertext has 2 polynomials so we leave it like that;
+* `tow_args`: represents the number of towers for each generated polynomial default 2, 4 and 8  
+* `dpuNo` : represents the number of DPUs , the default value is 256: make sure the number of DPUs to be logn where log is to base 2;  
+* `RING_DIM_LOG`: represents the ring dimension of the polynomial the default size is 14;  
+* `POLY_NUM`: represents the number of polynomials needed for each setting above: usually the ciphertext has 2 polynomials so we leave it like that;  
 
 ## UPMEM PIM Integration
 
