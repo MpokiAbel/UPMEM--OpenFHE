@@ -24,17 +24,16 @@ The benchmark has some precofigure polynomial parameter for polynomial generatio
 
 You can manually reconfigure and recompile the following variables to your needs:
 
-* `tow_args`: represents the number of towers for each generated polynomial default 2, 4 and 8  
-* `dpuNo` : represents the number of DPUs , the default value is 256: make sure the number of DPUs to be logn where log is to base 2;  
-* `RING_DIM_LOG`: represents the ring dimension of the polynomial the default size is 14;  
-* `POLY_NUM`: represents the number of polynomials needed for each setting above: usually the ciphertext has 2 polynomials so we leave it like that;  
+* `tow_args`: signifies the count of towers for each created polynomial set to 2, 4, and 8 by default.  
+* `dpuNo`: denotes the quantity of DPUs, with a default of 256; ensure the DPU count follows a logarithmic relation with the base 2.  
+* `RING_DIM_LOG`: indicates the ring dimension of the polynomial, defaulting to a size of 14.  
+* `POLY_NUM`: signifies the quantity of polynomials necessary for the aforementioned configurations, typically 2 for each ciphertext.
 
 ## UPMEM PIM Integration
 
-Currently for purpose ofexperimentaion we have not implemented a full back-end based on PIM therefore we just intecept certain HE operations and offload to PIM. A much better approach is to have PIM as one of the backends of openFHE and re-implement a full HAL layer with PIM similar to [intel-hexl](https://github.com/intel/hexl)
+Currently, for experimentation purposes, we have not implemented a full backend based on PIM. Therefore, we only intercept certain HE operations and offload them to PIM. A more effective approach would be to integrate PIM as one of the backends of openFHE and re-implement a complete HAL layer with PIM, akin to [intel-hexl](https://github.com/intel/hexl).
 
-
-Most of the Pim-based implementations are in a folder `/src/core/pim` and `/src/core/include/pim`. The host folder contains code for the host CPU and the DPU folder represents the DPU kernels.
+The majority of PIM-based implementations reside in the folders `/src/core/pim` and `/src/core/include/pim`. The host folder contains code for the host CPU, while the DPU folder houses the DPU kernels.
 
 ### Rules on adding dpu kernels
 
