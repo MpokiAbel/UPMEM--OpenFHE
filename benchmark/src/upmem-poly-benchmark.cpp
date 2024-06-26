@@ -18,7 +18,7 @@
 using namespace lbcrypto;
 
 // static std::vector<usint> tow_args({1, 2, 4, 8, 16, 32});
-static std::vector<usint> tow_args({2, 4});
+static std::vector<usint> tow_args({2, 4, 8});
 static const usint dpuNo        = 256;
 static const usint DCRTBITS     = MAX_MODULUS_SIZE;
 static const usint RING_DIM_LOG = 18;
