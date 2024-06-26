@@ -50,7 +50,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "Pim/PimManager.h"
+#include "pim/PimManager.h"
 
 // the following should be set to 1 in order to have native vector use block
 // allocations then determine if you want dynamic or static allocations by

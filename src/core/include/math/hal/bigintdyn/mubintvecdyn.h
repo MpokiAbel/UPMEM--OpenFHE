@@ -45,7 +45,7 @@
         #include "utils/exception.h"
         #include "utils/inttypes.h"
         #include "utils/serializable.h"
-        #include "Pim/PimManager.h"
+        #include "pim/PimManager.h"
 
         #include <initializer_list>
         #include <iostream>

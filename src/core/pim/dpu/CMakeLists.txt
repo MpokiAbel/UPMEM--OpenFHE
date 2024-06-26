@@ -29,7 +29,7 @@ if(RUN_ON_DPU)
         # Add a custom command for each program to compile
         add_custom_command(
             TARGET build_dpu_programs
-            COMMAND ${CMAKE_COMMAND} -E env ${DPU_CLANG_COMPILER} -DNR_TASKLETS=12 -o ${CMAKE_BINARY_DIR}/src/core/Pim/dpu/${program_name} ${source_file}
+            COMMAND ${CMAKE_COMMAND} -E env ${DPU_CLANG_COMPILER} -DNR_TASKLETS=12 -o ${CMAKE_BINARY_DIR}/src/core/pim/dpu/${program_name} ${source_file}
             COMMENT "Compiling DPU Program ${program_name}..."
             DEPENDS ${source_file}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

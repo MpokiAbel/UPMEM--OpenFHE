@@ -48,7 +48,7 @@
 #include <utility>
 #include <vector>
 #include <map>
-#include <Pim/PimManager.h>
+#include <pim/PimManager.h>
 
 namespace lbcrypto {
 /**

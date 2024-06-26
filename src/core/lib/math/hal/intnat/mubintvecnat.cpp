@@ -39,7 +39,7 @@
 #include "math/nbtheory-impl.h"
 
 #include "utils/exception.h"
-#include "Pim/PimManager.h"
+#include "pim/PimManager.h"
 
 namespace intnat {
 

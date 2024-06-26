@@ -1,7 +1,7 @@
 #include <sys/types.h>
 #include <cstddef>
 #include <cstdint>
-#include "Pim/PimManager.h"
+#include "pim/PimManager.h"
 #include "utils/debug.h"
 #include "lattice/lat-hal.h"
 extern "C" {
@@ -11,7 +11,7 @@ extern "C" {
 }
 
 #ifndef DPU_BINARY
-    #define DPU_BINARY "./src/core/Pim/dpu/mubintvecnat_dpu"
+    #define DPU_BINARY "./src/core/pim/dpu/mubintvecnat_dpu"
 #endif
 
 #ifndef LOG

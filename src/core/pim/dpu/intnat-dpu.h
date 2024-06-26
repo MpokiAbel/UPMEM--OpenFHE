@@ -2,12 +2,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <cstdint>
 
 /*
-    This file tries to put the same computations as the one being executed on openFHE- just for fair comparison
+    in this file i try to put the same computations as the one being executed on openFHE- just for fair comparison
     However, specific hardware optimizations can be made for some operations which are specific to DPUs, i.e 
-    writting some code in assemby code of the DPU.
+    writting some code in assembly code of the DPU.
 */
 typedef uint64_t NativeInt;
 typedef int64_t SignedNativeInt;
@@ -17,7 +16,7 @@ struct typeD {
     NativeInt lo;
 };
 
-/* Functions associated with the polynomila modular element-wise additions */
+/* Functions associated with the polynomial modular element-wise additions */
 // This is the number of elements  that is to be copied from the host
 static void ModAddFastEq(NativeInt* m_value, NativeInt b_m_value, NativeInt modulus_m_values) {
     *m_value += b_m_value;
@@ -78,6 +77,7 @@ NativeInt ComputeMu(NativeInt m_value) {
         return 0;
     }
     int64_t msb = GetMSB(m_value);
+
     /*I changed the original code to accomodate the shifts operations for divisions and multiplication*/
     NativeInt tmp = 1 << (msb << 1 | 3);
 

@@ -3,7 +3,7 @@
 #
 
 # all files named *.c or */cpp are compiled to form the library
-file (GLOB_RECURSE CORE_SRC_FILES CONFIGURE_DEPENDS lib/*.c lib/*.cpp lib/utils/*.cpp Pim/host/*.cpp)
+file (GLOB_RECURSE CORE_SRC_FILES CONFIGURE_DEPENDS lib/*.c lib/*.cpp lib/utils/*.cpp pim/host/*.cpp)
 
 list(APPEND CORE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 list(APPEND CORE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/lib")
@@ -130,5 +130,5 @@ if( BUILD_STATIC )
 endif()
 
 if(RUN_ON_DPU)
-	add_subdirectory(Pim/dpu)
+	add_subdirectory(pim/dpu)
 endif()

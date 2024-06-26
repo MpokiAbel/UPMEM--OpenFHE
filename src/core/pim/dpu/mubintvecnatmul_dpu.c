@@ -6,7 +6,7 @@
 #include <alloc.h>
 #include <perfcounter.h>
 #include <alloc.h>
-#include "intnat-dpu.h"
+#include "mubintvecnat-dpu.h"
 
 #define CACHE_SIZE (1 << 8)
 #define SIZE       (CACHE_SIZE >> 3)
@@ -19,12 +19,11 @@ int main() {
     if (tasklet_id == 0) {
         mem_reset();  // Resets the heap
     }
-
     /*
         Precompute the barret. 
         Here i should have a barrier, and have only one thread compute the barret and 
         put it in a shared variable only for read (no synchronization would be need)
-    */ 
+    */
     NativeInt mram_mu = ComputeMu(mram_modulus);
 
     NativeInt* cache_A = (NativeInt*)mem_alloc(CACHE_SIZE);

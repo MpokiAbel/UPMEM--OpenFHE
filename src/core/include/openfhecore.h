@@ -47,6 +47,6 @@
 
 #include "version.h"
 
-#include "Pim/PimManager.h"
+#include "pim/PimManager.h"
 
 #endif /* SRC_CORE_INCLUDE_OPENFHECORE_H_ */
