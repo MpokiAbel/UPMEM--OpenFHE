@@ -53,7 +53,6 @@
 #include <utility>
 #include <vector>
 
-#include "pim/PimManager.h"
 namespace lbcrypto {
 
 /**

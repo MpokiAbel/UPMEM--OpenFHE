@@ -48,8 +48,8 @@ add_custom_target( allcore )
 if( BUILD_SHARED )
 set (CORELIBS PUBLIC OPENFHEcore ${THIRDPARTYLIBS} ${OpenMP_CXX_FLAGS})
 	target_link_libraries (OPENFHEcore ${THIRDPARTYLIBS} ${OpenMP_CXX_FLAGS})
-	target_include_directories(OPENFHEcore PRIVATE "/usr/include/dpu")
-	target_link_directories(OPENFHEcore PRIVATE "/usr/lib/")
+	# target_include_directories(OPENFHEcore PRIVATE "/usr/include/dpu")
+	# target_link_directories(OPENFHEcore PRIVATE "/usr/lib/")
 	add_dependencies( allcore OPENFHEcore)
 endif()
 
@@ -130,5 +130,24 @@ if( BUILD_STATIC )
 endif()
 
 if(RUN_ON_DPU)
-	add_subdirectory(pim/dpu)
+	file(GLOB_RECURSE DPU_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/pim/dpu/*.c")
+
+	set(DPU_CC "dpu-upmem-dpurte-clang")
+
+	add_custom_target(build_dpu_programs ALL)
+
+# Iterate over each source file
+	foreach(source ${DPU_SOURCES})
+    	get_filename_component(program_name ${source} NAME_WE)
+    # message("Compiling DPU Program: ${program_name}")
+    
+    # Add a custom command to compile each source file
+   		add_custom_command(
+        TARGET build_dpu_programs
+        COMMAND ${CMAKE_COMMAND} -E env ${DPU_CC} -DNR_TASKLETS=16 -o ${CMAKE_BINARY_DIR}/src/core/pim/dpu/${program_name} ${source}
+        COMMENT "Compiling DPU Program ${program_name}..."
+        DEPENDS ${source}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    	)
+	endforeach()
 endif()

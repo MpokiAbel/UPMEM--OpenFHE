@@ -409,16 +409,9 @@ DCRTPolyImpl<VecType> DCRTPolyImpl<VecType>::Minus(const DCRTPolyImpl& rhs) cons
 template <typename VecType>
 DCRTPolyImpl<VecType>& DCRTPolyImpl<VecType>::operator+=(const DCRTPolyImpl& rhs) {
     size_t size{m_vectors.size()};
-    // if (pim != nullptr) {
-    //     if (!pim->Run_On_Pim(this, rhs)) {
-    //         std::cout << "Failed to Run" << std::endl;
-    //     }
-    // }
-    // else {
 #pragma omp parallel for num_threads(OpenFHEParallelControls.GetThreadLimit(size))
     for (size_t i = 0; i < size; ++i)
         m_vectors[i] += rhs.m_vectors[i];
-    // }
     return *this;
 }
 

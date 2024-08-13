@@ -50,7 +50,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "pim/PimManager.h"
+#include "pim/PimData.h"
 
 // the following should be set to 1 in order to have native vector use block
 // allocations then determine if you want dynamic or static allocations by
@@ -125,6 +125,7 @@ private:
 
 #if BLOCK_VECTOR_ALLOCATION != 1
     std::vector<IntegerType> m_data{};
+    PimData pim_m_data =  {1,2,3,4};
 #else
     xvector<IntegerType> m_data;
 #endif

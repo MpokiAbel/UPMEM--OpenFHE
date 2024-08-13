@@ -229,9 +229,6 @@ else()
     message( STATUS "RUN_ON_DPU:     ${RUN_ON_DPU}")
 endif()
 
-# Set these flags for debugging option -- useful for profiling 
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 
 #--------------------------------------------------------------------
 # Installation logic
